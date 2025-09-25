@@ -59,7 +59,9 @@ export interface StatisticsInfo {
 }
 
 export const getCompanyStatic = () => {
-  const companyId = localStorage.getItem('companyId') ?? 1
+
+  //const companyId = localStorage.getItem('companyId') ?? 1  改动描述：companyid问题
+  const companyId =1
   return axios.get('/project/statistics', {
     params: {
       companyId,

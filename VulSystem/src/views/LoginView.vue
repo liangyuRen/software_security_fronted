@@ -45,7 +45,9 @@ const handleLogin = () => {
         ElMessage.error(res.data.obj)
         return
       }
+      //bug描述：后端返回的数据根本没有companyId这个参数
       localStorage.setItem('companyId', res.data.obj.companyId)
+
       localStorage.setItem('companyName', res.data.obj.companyName)
       ElMessage.success('登录成功')
       // wait for 0.5 second

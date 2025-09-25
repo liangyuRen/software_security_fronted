@@ -98,7 +98,9 @@ export const getProjectList = (page: number, size: number, companyId: number) =>
 }
 
 export const getVulProjectList = async () => {
-  const companyId = +(localStorage.getItem('companyId') ?? 1)
+  //companyid设为1
+  //const companyId = +(localStorage.getItem('companyId') ?? 1)
+  const companyId =1
   const res = await axios.get(`/project/list?page=${1}&size=${20}&companyId=${companyId}`)
   // 获取列表数据后，筛选出风险项目并排序
   const projectInfos: Obj[] = res.data.obj
@@ -121,7 +123,8 @@ export const getVulProjectList = async () => {
     risk_level: project_1.risk_level || '',
     risk_threshold: project_1.risk_threshold ? parseInt(project_1.risk_threshold, 10) : 0,
     // 设置默认值，只是为了满足类型定义，不会用到
-    companyId: companyId + '',
+    //companyId: companyId + '',
+    companyId:1,
     language: 'java',
     filePath: null,
   }))
