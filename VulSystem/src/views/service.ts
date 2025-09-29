@@ -8,7 +8,11 @@ export const api = {
 
   register(info) {
     console.log(info)
-    return axios.post('')
+    return axios.post('/user/register', {
+      username: info.username,
+      email: info.email,
+      password: info.password
+    });
   },
 
   getProjectDetail(projectId: number) {
@@ -25,5 +29,13 @@ export const api = {
         id: projectId,
       },
     })
+  },
+
+  getUserInfo() {
+    return axios.get('/user/info', {
+      params: {
+        username: localStorage.getItem('companyName'),
+      },
+    });
   },
 }

@@ -16,7 +16,7 @@
             <!-- <UserFilled /> -->
           </el-icon>
         </div>
-        <h4>用户xxx</h4>
+        <h4>{{ userInfo.username || '用户名' }}</h4>
       </div>
       <div class="user-infos">
         <div class="info">
@@ -24,7 +24,7 @@
             职位
           </div>
           <div class="text">
-            总经理
+            {{ userInfo.role || '暂无职位信息' }}
           </div>
         </div>
         <div class="info">
@@ -32,7 +32,7 @@
             手机号
           </div>
           <div class="text">
-            134*********
+            {{ userInfo.phone || '暂无手机号' }}
           </div>
         </div>
         <div class="info">
@@ -40,14 +40,15 @@
             办公邮箱
           </div>
           <div class="text">
-            23********@qq.com
+            {{ userInfo.email || '暂无邮箱' }}
           </div>
         </div>
         <div class="info">
           <div class="label">
             是否是会员
           </div>
-          <div class="tag" :style="{ backgroundColor: '#FFF5EB', color: ' #FE8B00' }"> VIP
+          <div class="tag" :style="{ backgroundColor: userInfo.isVip ? '#FFF5EB' : '#F0F0F0', color: userInfo.isVip ? '#FE8B00' : '#999' }">
+            {{ userInfo.isVip ? 'VIP' : '普通用户' }}
           </div>
         </div>
         <div class="info">
@@ -55,7 +56,7 @@
             所属团队
           </div>
           <div class="text">
-            某事业部
+            {{ userInfo.team || '暂无团队信息' }}
           </div>
         </div>
       </div>
@@ -69,13 +70,42 @@
 import { ArrowRight, Discount, User } from '@element-plus/icons-vue'
 import DataCard from '@/components/DataCard.vue';
 import { onMounted, reactive, ref, watch } from 'vue';
+import { ElMessage } from 'element-plus';
+import { api } from './service';
 
+// 用户信息数据结构
+interface UserInfo {
+  userName?: string;
+  role?: string;
+  phone?: string;
+  email?: string;
+  isVip?: boolean;
+  team?: string;
+  [key: string]: any;
+}
+
+const userInfo = reactive<UserInfo>({});
+
+// 获取用户信息
+const getUserInfo = () => {
+  api.getUserInfo()
+    .then(res => {
+      console.log('用户信息响应:', res);
+      if (res.data.code === 200) {
+        // 将后端返回的用户数据合并到 userInfo 对象中
+        Object.assign(userInfo, res.data.obj);
+      } else {
+        ElMessage.error(res.data.obj || '获取用户信息失败');
+      }
+    })
+    .catch(err => {
+      console.error('获取用户信息失败:', err);
+      ElMessage.error('获取用户信息失败');
+    });
+};
 
 onMounted(() => {
-  // getStrategy()
-  //   .then(res => {
-  //     stratage.value = res.data.obj
-  //   })
+  getUserInfo();
 })
 
 
