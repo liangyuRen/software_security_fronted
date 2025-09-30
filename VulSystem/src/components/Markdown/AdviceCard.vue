@@ -103,7 +103,7 @@ const props = withDefaults(
   }
 );
 const modelName = ref<string>('qwen')
-const modelList = ['Deepseek', 'Llama', 'qwen']
+const modelList = ['deepseek', 'llama', 'qwen']
 
 const isLoading = ref<boolean>(true)
 const errCode = ref<string>('')

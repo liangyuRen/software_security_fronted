@@ -17,7 +17,7 @@ export const getSuggestion = (name: string, desc: string, model: string, code?: 
       vulnerability_name: name,
       vulnerability_desc: desc,
       related_code: code,
-      model,
+      model:model,
     },
     {
       baseURL: 'http://localhost:5000',

@@ -16,7 +16,7 @@
             <!-- <UserFilled /> -->
           </el-icon>
         </div>
-        <h4>{{ userInfo.username || '用户名' }}</h4>
+        <h4>{{ userInfo.userName || '用户名' }}</h4>
       </div>
       <div class="user-infos">
         <div class="info">
