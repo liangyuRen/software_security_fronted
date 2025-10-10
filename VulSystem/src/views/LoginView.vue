@@ -49,6 +49,15 @@
           </el-input>
         </div>
 
+          <div class="input-container">
+          <div class="input-title">手机号码</div>
+          <el-input v-model="regPhone" placeholder="请输入手机号码" clearable>
+            <template #prefix>
+              <el-icon><Message /></el-icon>
+            </template>
+          </el-input>
+        </div>
+
         <div class="input-container">
           <div class="input-title">密码</div>
           <el-input v-model="regPassword" show-password placeholder="请输入密码" clearable>
@@ -99,6 +108,7 @@ const passwd = ref('')
 // 注册相关数据
 const regUsername = ref('')
 const regEmail = ref('')
+const regPhone = ref('')
 const regPassword = ref('')
 const regConfirmPassword = ref('')
 
@@ -110,6 +120,7 @@ const toggleMode = () => {
     // 切换到登录模式时清空注册表单
     regUsername.value = ''
     regEmail.value = ''
+    regPhone.value = ''
     regPassword.value = ''
     regConfirmPassword.value = ''
   } else {
@@ -136,6 +147,7 @@ const handleLogin = () => {
       //bug描述：后端返回的数据根本没有companyId这个参数
       localStorage.setItem('companyId', res.data.obj.companyId)
       localStorage.setItem('companyName', res.data.obj.companyName)
+      localStorage.setItem('username', username.value)
       ElMessage.success('登录成功')
       // wait for 0.5 second
       setTimeout(() => {
@@ -159,6 +171,10 @@ const handleRegister = () => {
     ElMessage.warning('请输入邮箱')
     return
   }
+    if (!regPhone.value) {
+    ElMessage.warning('请输入电话号码')
+    return
+  }
 
   if (!regPassword.value) {
     ElMessage.warning('请输入密码')
@@ -174,7 +190,8 @@ const handleRegister = () => {
   const registerInfo = {
     username: regUsername.value,
     email: regEmail.value,
-    password: regPassword.value
+    password: regPassword.value,
+    phone: regPhone.value
   }
 
   api.register(registerInfo)
@@ -194,6 +211,7 @@ const handleRegister = () => {
         regEmail.value = ''
         regPassword.value = ''
         regConfirmPassword.value = ''
+        regPhone.value = ''
       }, 1000)
     })
     .catch(err => {

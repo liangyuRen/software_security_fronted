@@ -10,7 +10,7 @@
         <div v-else class="user-name">
           <span>
             {{
-              '欢迎您，' + companyName
+              '欢迎您，' + username
             }}
           </span>
           <span class="login" @click="handleLogout">退出登录</span>
@@ -104,7 +104,7 @@ const isLogin = computed(() => {
 })
 const companyId = ref('');
 const companyName = ref('');
-
+const username = ref('');
 interface NavTitle {
   index: string,
   uname: string,
@@ -148,6 +148,8 @@ const titles: NavTitle[] = [
 onMounted(() => {
   companyId.value = localStorage.getItem('companyId') || '';
   companyName.value = localStorage.getItem('companyName') || '';
+  username.value
+    = localStorage.getItem('username') || '';
 })
 </script>
 <style scoped>
