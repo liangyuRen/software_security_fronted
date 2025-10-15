@@ -75,12 +75,12 @@ const checkEmail = computed(() => {
 const strength = computed(() => {
   if (!passwd.value) return ''
 
-  let len6 = passwd.value.length >= 6
-  let len10 = passwd.value.length >= 10
-  let hasUpper = passwd.value.match(/[A-Z]/)
-  let hasSpecial = passwd.value.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/)
-  let hasNumber = passwd.value.match(/[0-9]/)
-  let hasLower = passwd.value.match(/[a-z]/)
+  const len6 = passwd.value.length >= 6
+  const len10 = passwd.value.length >= 10
+  const hasUpper = passwd.value.match(/[A-Z]/)
+  const hasSpecial = passwd.value.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/)
+  const hasNumber = passwd.value.match(/[0-9]/)
+  const hasLower = passwd.value.match(/[a-z]/)
 
   if(!len6 || !hasUpper || !hasNumber || !hasLower) return 'weak'
 
