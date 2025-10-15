@@ -205,7 +205,9 @@ const handleAddProject = (newProject: ProjectInfo) => {
         message: '成功添加',
         type: 'success',
       })
-      window.location.reload();
+      // 重新加载项目列表，而不是刷新整个页面
+      const companyId = 1;
+      getProjects(companyId);
     } else {
       ElMessage({
         message: '添加失败: ' + res.message + ' ' + res.obj,
@@ -226,7 +228,9 @@ const handleEditProject = (project: ProjectInfo) => {
         message: '成功更新',
         type: 'success',
       })
-      window.location.reload();
+      // 重新加载项目列表，而不是刷新整个页面
+      const companyId = 1;
+      getProjects(companyId);
     } else {
       ElMessage({
         message: '更新失败: ' + res.message + ' ' + res.obj,
@@ -254,6 +258,9 @@ const handleDeleteProject = (project: ProjectInfo) => {
             message: '成功删除',
             type: 'success',
           })
+          // 重新加载项目列表，而不是刷新整个页面
+          const companyId = 1;
+          getProjects(companyId);
         } else {
           ElMessage({
             message: '删除失败: ' + res.message + ' ' + res.obj,

@@ -43,8 +43,8 @@ export interface VulnerabilityReportSearchResponse {
   obj: Record[]
 }
 
-export const getVulnerabilityReportList = (page: number, size: number) => {
-  return new Promise((resolve, reject): VulnerabilityReportListResponse => {
+export const getVulnerabilityReportList = (page: number, size: number): Promise<VulnerabilityReportListResponse> => {
+  return new Promise((resolve, reject) => {
     instance
       .get(`/vulnerabilityReport/list?page=${page}&size=${size}`)
       .then((res: AxiosResponse<VulnerabilityReportListResponse>) => {

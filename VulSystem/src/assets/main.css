@@ -7,6 +7,35 @@
   font-weight: normal;
 }
 
+/* 全局强制字体颜色，确保可见性 */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body, html {
+  color: #24292f !important;
+}
+
+/* 确保所有文本都有足够的对比度 */
+p, span, div, a, button, input, textarea, label, td, th {
+  color: inherit;
+}
+
+/* 特别强化表格文字 */
+table {
+  color: #24292f;
+}
+
+table th {
+  color: #24292f !important;
+  font-weight: 700 !important;
+}
+
+table td {
+  color: #24292f !important;
+}
+
 a,
 .green {
   text-decoration: none;
@@ -25,17 +54,135 @@ a,
 /*some modification of ElementPlus to beautify*/
 .el-input__wrapper {
   border-radius: 6px !important;
+  border: 1px solid #dcdfe6 !important;
+  box-shadow: 0 0 0 1px transparent inset !important;
+}
+
+.el-input__wrapper:hover {
+  border-color: #c0c4cc !important;
+}
+
+.el-input__wrapper.is-focus {
+  border-color: #409eff !important;
+  box-shadow: 0 0 0 1px #409eff inset !important;
 }
 
 .el-select__wrapper{
   border-radius: 6px !important;
+  border: 1px solid #dcdfe6 !important;
+}
+
+.el-select__wrapper:hover {
+  border-color: #c0c4cc !important;
+}
+
+.el-select__wrapper.is-focused {
+  border-color: #409eff !important;
 }
 
 .el-tag {
   border-radius: 6px !important;
   padding: 0 5px !important;
+  border: 1px solid currentColor !important;
 }
 
 .el-tag__content{
   font-weight: bold !important;
+  color: inherit !important;
+}
+
+/* 增强对话框边框 */
+.el-dialog {
+  border: 1px solid #e4e7ed !important;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 增强表单项标签对比度 */
+.el-form-item__label {
+  color: #333 !important;
+  font-weight: 600 !important;
+}
+
+/* 增强按钮边框 */
+.el-button {
+  border: 1px solid !important;
+}
+
+.el-button--primary {
+  border-color: #409eff !important;
+}
+
+.el-button--danger {
+  border-color: #f56c6c !important;
+}
+
+.el-button--default {
+  border-color: #dcdfe6 !important;
+  color: #606266 !important;
+}
+
+.el-button--default:hover {
+  border-color: #409eff !important;
+  color: #409eff !important;
+}
+
+/* 增强上传组件边框 */
+.el-upload-dragger {
+  border: 2px dashed #d9d9d9 !important;
+}
+
+.el-upload-dragger:hover {
+  border-color: #409eff !important;
+}
+
+/* 增强文本对比度 */
+.el-upload__text {
+  color: #606266 !important;
+}
+
+.el-upload__tip {
+  color: #909399 !important;
+  font-size: 13px !important;
+}
+
+/* 优化过渡动画 */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* 改善卡片阴影效果 */
+.el-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  transition: box-shadow 0.3s ease !important;
+}
+
+.el-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* 改善滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 响应式字体大小 */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
 }

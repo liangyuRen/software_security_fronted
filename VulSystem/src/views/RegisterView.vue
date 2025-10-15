@@ -117,15 +117,19 @@ const checkRegisterAvailable = computed(() => {
 const handleRegister = () => {
   const info = {
     username: username.value,
+    email: email.value,
     password: passwd.value,
+    phone: ''
   }
   api.register(info)
     .then(res => {
       console.log(res);
-      router.push('/')
+      ElMessage.success('注册成功！')
+      router.push('/login')
     })
     .catch(err => {
-      ElMessage.error(err)
+      console.error('注册失败:', err)
+      ElMessage.error(err?.data?.message || '注册失败，请稍后重试')
     })
 }
 

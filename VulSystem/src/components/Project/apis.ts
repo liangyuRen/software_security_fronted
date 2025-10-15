@@ -11,8 +11,8 @@ export interface ProjectCreateResponse {
   // [property: string]: never
 }
 
-export const createProject = (project: FormData) => {
-  return new Promise((resolve, reject): ProjectCreateResponse => {
+export const createProject = (project: FormData): Promise<ProjectCreateResponse> => {
+  return new Promise((resolve, reject) => {
     instance
       .post(`/project/create`, project)
       .then((res: AxiosResponse<ProjectCreateResponse>) => {
@@ -25,8 +25,8 @@ export const createProject = (project: FormData) => {
   })
 }
 
-export const updateProject = (project: FormData) => {
-  return new Promise((resolve, reject): ProjectCreateResponse => {
+export const updateProject = (project: FormData): Promise<ProjectCreateResponse> => {
+  return new Promise((resolve, reject) => {
     instance
       .post(`/project/update`, project)
       .then((res: AxiosResponse<ProjectCreateResponse>) => {
@@ -39,8 +39,8 @@ export const updateProject = (project: FormData) => {
   })
 }
 
-export const deleteProject = (project: FormData) => {
-  return new Promise((resolve, reject): ProjectCreateResponse => {
+export const deleteProject = (project: FormData): Promise<ProjectCreateResponse> => {
+  return new Promise((resolve, reject) => {
     instance
       .post(`/project/delete`, project)
       .then((res: AxiosResponse<ProjectCreateResponse>) => {
@@ -83,8 +83,8 @@ export interface Obj {
   // [property: string]: never
 }
 
-export const getProjectList = (page: number, size: number, companyId: number) => {
-  return new Promise((resolve, reject): ProjectListResponse => {
+export const getProjectList = (page: number, size: number, companyId: number): Promise<ProjectListResponse> => {
+  return new Promise((resolve, reject) => {
     instance
       .get(`/project/list?page=${page}&size=${size}&companyId=${companyId}`)
       .then((res: AxiosResponse<ProjectListResponse>) => {

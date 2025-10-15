@@ -204,7 +204,7 @@ const sendMessage = () => {
 .close-icon {
   width: 20px;
   height: 20px;
-  color: #666;
+  color: #57606a;
 }
 
 .chat-messages {
@@ -254,9 +254,9 @@ const sendMessage = () => {
   background-color: #e5e5e5;
 
   span{
-    color: #666;
+    color: #24292f;
     font-size: 18px;
-    font-weight: bold;
+    font-weight: 700;
   }
 }
 

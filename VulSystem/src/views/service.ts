@@ -6,7 +6,7 @@ export const api = {
     return axios.get('/user/login', {params: {username: username, password: password}});
   },
 
-  register(info) {
+  register(info: any) {
     console.log(info)
     return axios.post('/user/register', {
       username: info.username,

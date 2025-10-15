@@ -25,14 +25,14 @@ const highlightedText = computed(() => {
   const lowerText = props.text.toLowerCase();
   const lowerHighlight = props.highlight.toLowerCase();
 
-  const isEqual = (charS, charT) => {
+  const isEqual = (charS: string, charT: string) => {
     if(charS === '(' && charT === '（') return true;
     if(charS === ')' && charT === '）') return true;
     return charS === charT;
   }
 
   // pre-build table
-  const buildPartialMatchTable = (pattern) => {
+  const buildPartialMatchTable = (pattern: string) => {
     const table = new Array(pattern.length).fill(0);
     let prefixLength = 0;
     for (let i = 1; i < pattern.length; i++) {
@@ -48,7 +48,7 @@ const highlightedText = computed(() => {
   };
 
   // KMP search
-  const kmpSearch = (text, pattern) => {
+  const kmpSearch = (text: string, pattern: string) => {
     const table = buildPartialMatchTable(pattern);
     const matches = [];
     let j = 0;
@@ -86,10 +86,12 @@ watch(() => props.highlight, () => {
   // remove and add class to trigger animation
   const elements = document.getElementsByClassName('highlight');
   Array.from(elements).forEach(element => {
-    element.classList.remove('bounce-animation');
-    // trigger reflow
-    void element.offsetWidth;
-    element.classList.add('bounce-animation');
+    if (element instanceof HTMLElement) {
+      element.classList.remove('bounce-animation');
+      // trigger reflow
+      void element.offsetWidth;
+      element.classList.add('bounce-animation');
+    }
   });
 })
 </script>

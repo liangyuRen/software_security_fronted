@@ -30,7 +30,7 @@ const errorHandle = (status: number, info: string) => {
 const instance = axios.create({
   // 这里放网络请求的公共配置
   timeout: 500000,
-  baseURL: 'http://localhost:8081', // 服务器地址，上线后需要修改
+  baseURL: '/api', // 通过Nginx代理转发到后端
 })
 
 // 拦截器----发送数据之前
@@ -78,7 +78,13 @@ instance.interceptors.response.use(
   (error) => {
     // 拦截器失败函数
     const { response } = error
-    errorHandle(response.status, response.info)
+    if (response) {
+      errorHandle(response.status, response.info)
+      return Promise.reject(response)
+    } else {
+      console.log('网络错误或请求超时')
+      return Promise.reject(error)
+    }
   },
 )
 

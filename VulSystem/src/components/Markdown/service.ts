@@ -20,7 +20,7 @@ export const getSuggestion = (name: string, desc: string, model: string, code?: 
       model:model,
     },
     {
-      baseURL: 'http://localhost:5000',
+      baseURL: '/crawler',
     },
   )
 }

@@ -223,5 +223,26 @@ onMounted(() => {
   right: 0;
   bottom: 0;
   margin: 20px;
+  z-index: 999;
+}
+
+/* 响应式布局优化 */
+@media (max-width: 768px) {
+  .el-aside {
+    display: none;
+  }
+
+  .home-main {
+    margin-left: 0 !important;
+    padding: 15px !important;
+  }
+
+  .header h2 {
+    font-size: 18px !important;
+  }
+
+  .llm-helper {
+    margin: 10px;
+  }
 }
 </style>

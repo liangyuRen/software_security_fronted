@@ -128,7 +128,8 @@ const sbomIntro = computed(() => {
   margin: 0 auto;
 
   .intro {
-    color: #666;
+    color: #57606a;
+    font-weight: 500;
     margin: 10px 0 30px 0;
   }
 

@@ -124,7 +124,9 @@ const handleEditFile = (project: ProjectInfo) => {
     flex: 1;
 
     .card-title {
-      font-size: 15px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #24292f;
       /* margin-bottom: 10px; */
       cursor: pointer;
     }
@@ -132,8 +134,9 @@ const handleEditFile = (project: ProjectInfo) => {
     .text {
       flex: 1;
       width: 100%;
-      font-size: 12px;
-      color: #999999;
+      font-size: 13px;
+      color: #57606a;
+      font-weight: 500;
       display: -webkit-box;
       /* 为了使用 WebKit 的剪裁 */
       -webkit-box-orient: vertical;
@@ -145,6 +148,7 @@ const handleEditFile = (project: ProjectInfo) => {
       /* 隐藏超出内容 */
       text-overflow: ellipsis;
       /* 显示省略号 */
+      line-height: 1.6;
     }
   }
 
@@ -181,24 +185,27 @@ const handleEditFile = (project: ProjectInfo) => {
   align-items: center;
 
   .text {
-    color: #666;
-    font-size: 12px;
+    color: #24292f;
+    font-size: 13px;
+    font-weight: 600;
   }
 
   .modify-project-button{
-    padding: 2px 8px;
-    border-radius: 5px;
+    padding: 4px 12px;
+    border-radius: 6px;
     background-color: #ffffff;
-    color: #666;
+    color: #24292f;
     cursor: pointer;
     margin: 5px 0;
-    font-size: 12px;
-    border: 1px solid #dedfe0;
-    transition: all 0.4s;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1.5px solid #d0d7de;
+    transition: all 0.2s;
   }
 
   .modify-project-button:hover{
-    background-color: #f5f5f5;
+    background-color: #f6f8fa;
+    border-color: #8c959f;
   }
 }
 </style>

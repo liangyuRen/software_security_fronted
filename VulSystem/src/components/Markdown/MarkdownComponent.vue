@@ -15,11 +15,14 @@ const props = defineProps<{
 }>();
 
 // 配置 marked 以使用 highlight.js 进行代码高亮
-marked.setOptions({
-  highlight: (code, lang) => {
-    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-    return hljs.highlight(code, { language }).value;
-  },
+marked.use({
+  renderer: {
+    code(code: string, lang: string) {
+      const language = hljs.getLanguage(lang || '') ? lang : 'plaintext';
+      const highlighted = hljs.highlight(code, { language }).value;
+      return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`;
+    }
+  }
 });
 
 // 计算属性，将 Markdown 转换为 HTML
@@ -31,7 +34,9 @@ const parsedMarkdown = computed(() => {
 onMounted(() => {
   const codeBlocks = document.querySelectorAll('pre code');
   codeBlocks.forEach((block) => {
-    hljs.highlightBlock(block);
+    if (block instanceof HTMLElement) {
+      hljs.highlightElement(block);
+    }
   });
 });
 </script>

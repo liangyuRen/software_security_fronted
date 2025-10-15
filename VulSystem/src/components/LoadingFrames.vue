@@ -76,7 +76,7 @@ const items = ref(new Array(16).fill(null));
   margin-top: 20px;
   text-align: center;
   font-size: 14px;
-  color: #666;
-  font-weight: bold;
+  color: #24292f;
+  font-weight: 700;
 }
 </style>

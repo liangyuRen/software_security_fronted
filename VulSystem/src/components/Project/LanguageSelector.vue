@@ -67,8 +67,8 @@ const handleSelect = (tabId: string): void => {
   border: none;
   background: none;
   font-size: 14px;
-  font-weight: 500;
-  color: #666;
+  font-weight: 600;
+  color: #57606a;
   cursor: pointer;
   position: relative;
   transition: all 0.3s ease;
@@ -78,11 +78,12 @@ const handleSelect = (tabId: string): void => {
 }
 
 .tab:hover {
-  color: #333;
+  color: #24292f;
 }
 
 .tab.selected {
-  color: #333;
+  color: #24292f;
+  font-weight: 700;
 }
 
 .background {
