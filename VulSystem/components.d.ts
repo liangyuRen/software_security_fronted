@@ -10,7 +10,6 @@ declare module 'vue' {
     AdviceCard: typeof import('./src/components/Markdown/AdviceCard.vue')['default']
     Chart: typeof import('./src/components/chart/index.vue')['default']
     DangerCard: typeof import('./src/components/ProjectsDetail/DangerCard.vue')['default']
-    DangerList: typeof import('./src/components/ProjectsDetail/DangerList.vue')['default']
     DataCard: typeof import('./src/components/DataCard.vue')['default']
     DataSetting: typeof import('./src/components/Optimize/DataSetting.vue')['default']
     EditableField: typeof import('./src/components/Optimize/EditableField.vue')['default']
@@ -65,6 +64,5 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SbomForm: typeof import('./src/components/ProjectsDetail/SbomForm.vue')['default']
-    TestTree: typeof import('./src/components/TestTree.vue')['default']
   }
 }

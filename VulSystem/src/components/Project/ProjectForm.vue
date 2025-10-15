@@ -31,7 +31,7 @@ const newProject = reactive<ProjectInfo>(props.project ??
 })
 const formRef = ref<FormInstance>();
 const currentFile = ref<File | null>(null);
-const fileUploadServerBaseURL = 'http://localhost:8080'; //TODO: change to real server address
+const fileUploadServerBaseURL = 'http://localhost:8081'; //TODO: change to real server address
 
 const getTitle = computed(() => {
   switch (props.type) {
@@ -87,7 +87,8 @@ function handleFileChange(file) {
     ElMessage.error('文件大小不能超过100MB')
     return
   }
-  if(file.raw.type !== 'application/zip' && file.raw.type !== 'application/x-7z-compressed' && file.raw.type !== 'application/x-tar') {
+  if(file.raw.type !== 'application/x-zip-compressed' && file.raw.type !== 'application/x-7z-compressed' && file.raw.type !== 'application/x-tar') {
+    print()
     ElMessage.error('文件格式不支持，请上传 zip/7z/tar 格式的文件')
     return
   }

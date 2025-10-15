@@ -26,13 +26,13 @@ defineProps<{
   flex: 1;
   padding: 20px;
   border-radius: 5px;
-  background-color: #fff;
+  background-color: #c80a0a;
   margin: 15px;
 }
 
 .card-header {
   width: 100%;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid rgba(30, 177, 60, 0.49);
   padding: 5px;
   display: flex;
   justify-content: space-between;
