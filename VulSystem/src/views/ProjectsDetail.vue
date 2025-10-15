@@ -145,7 +145,7 @@ const option = ref({
           },
           itemStyle: {
             borderRadius: 5,
-            color: '#f63f3f'
+            color: '#ec4899'
           },
         },
         {
@@ -156,7 +156,7 @@ const option = ref({
           },
           itemStyle: {
             borderRadius: 5,
-            color: '#f5800c'
+            color: '#8b5cf6'
           }
         },
         {
@@ -168,7 +168,7 @@ const option = ref({
           },
           itemStyle: {
             borderRadius: 5,
-            color: '#fddb13'
+            color: '#10b981'
           }
         },
       ],
@@ -192,7 +192,7 @@ const getProjectDetail = () => {
             },
             itemStyle: {
               borderRadius: 5,
-              color: '#f63f3f'
+              color: '#ec4899'
             },
           },
           {
@@ -203,7 +203,7 @@ const getProjectDetail = () => {
             },
             itemStyle: {
               borderRadius: 5,
-              color: '#f5800c'
+              color: '#8b5cf6'
             }
           },
           {
@@ -215,7 +215,7 @@ const getProjectDetail = () => {
             },
             itemStyle: {
               borderRadius: 5,
-              color: '#fddb13'
+              color: '#10b981'
             }
           },
         ],
