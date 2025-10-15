@@ -518,18 +518,32 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
         System.out.println("DEBUG: 系统架构: " + System.getProperty("os.arch"));
         System.out.println("DEBUG: Java架构: " + System.getProperty("sun.arch.data.model") + "位");
 
-        // 检查不同可能的OpenSCA文件名
+        // 检查不同可能的OpenSCA文件名（支持Linux和Windows）
         File openscaExe = null;
-        String[] possibleNames = {
-                "opensca-cli-3.0.8-installer.exe",
-                "opensca-cli.exe",
-                "opensca.exe",
-                "opensca-cli-3.0.8.exe"
-        };
+        String osName = System.getProperty("os.name").toLowerCase();
+        boolean isWindows = osName.contains("win");
+
+        String[] possibleNames;
+        if (isWindows) {
+            possibleNames = new String[]{
+                    "opensca-cli-3.0.8-installer.exe",
+                    "opensca-cli.exe",
+                    "opensca.exe",
+                    "opensca-cli-3.0.8.exe"
+            };
+        } else {
+            // Linux/Unix系统
+            possibleNames = new String[]{
+                    "opensca/opensca-cli",  // 子目录中的CLI
+                    "opensca-cli",          // 当前目录的CLI
+                    "opensca",              // 脚本
+                    "opensca-cli-linux"     // Linux版本
+            };
+        }
 
         for (String name : possibleNames) {
             File candidate = new File(openscaToolDir, name);
-            System.out.println("DEBUG: 检查文件: " + candidate.getAbsolutePath() + " - 存在: " + candidate.exists());
+            System.out.println("DEBUG: 检查文件: " + candidate.getAbsolutePath() + " - 存在: " + candidate.exists() + " - 可执行: " + candidate.canExecute());
             if (candidate.exists()) {
                 openscaExe = candidate;
                 System.out.println("DEBUG: 找到OpenSCA可执行文件: " + openscaExe.getName());

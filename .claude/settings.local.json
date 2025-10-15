@@ -9,7 +9,8 @@
       "Bash(where mvn)",
       "Bash(mkdir:*)",
       "Bash(./mvnw.cmd clean:*)",
-      "Bash(cmd /c mvnw.cmd clean package:*)"
+      "Bash(cmd /c mvnw.cmd clean package:*)",
+      "Bash(docker compose:*)"
     ],
     "deny": [],
     "ask": []

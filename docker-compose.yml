@@ -1,11 +1,19 @@
 version: '3.8'
 
 services:
+  # ==========================================
   # MySQL Database Service
+  # ==========================================
   mysql:
     image: mysql:8.0
     container_name: vulsystem-mysql
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-changeme}
       MYSQL_DATABASE: ${DB_NAME:-kulin}
@@ -15,32 +23,81 @@ services:
     volumes:
       # Persistent database storage
       - mysql_data:/var/lib/mysql
-      # Initialize database with test data
-      - ./test_data_corrected.sql:/docker-entrypoint-initdb.d/init.sql:ro
-      # MySQL configuration (optional)
-      # - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      # Initialize VulSystem database
+      - ./test_data_corrected.sql:/docker-entrypoint-initdb.d/01-vulsystem.sql:ro
+      # Initialize XXL-Job database
+      - ./xxl-job-init.sql:/docker-entrypoint-initdb.d/02-xxl-job.sql:ro
     ports:
       - "${DB_PORT_EXTERNAL:-3306}:3306"
     networks:
       - vulsystem-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-changeme}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 --protocol=TCP -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --connect-timeout=3 | grep 'mysqld is alive' || exit 1"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 60s
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --default-authentication-plugin=mysql_native_password
 
+  # ==========================================
+  # XXL-Job Admin Service
+  # ==========================================
+  xxl-job-admin:
+    image: xuxueli/xxl-job-admin:2.4.1
+    container_name: vulsystem-xxl-job
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+        reservations:
+          memory: 150M
+    environment:
+      PARAMS: >-
+        --spring.datasource.url=jdbc:mysql://mysql:3306/xxl_job?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai&maxReconnects=3&initialTimeout=2
+        --spring.datasource.username=${DB_USERNAME:-root}
+        --spring.datasource.password=${DB_PASSWORD:-changeme}
+        --spring.datasource.hikari.maximum-pool-size=10
+        --spring.datasource.hikari.minimum-idle=5
+        --spring.datasource.hikari.connection-timeout=30000
+        --spring.datasource.hikari.idle-timeout=600000
+        --spring.datasource.hikari.max-lifetime=1800000
+        --xxl.job.accessToken=
+        --server.servlet.context-path=/xxl-job-admin
+      TZ: Asia/Shanghai
+    ports:
+      - "${XXL_JOB_PORT:-8080}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - vulsystem-network
+    # Healthcheck disabled - wget not available in container
+    # healthcheck:
+    #   test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/xxl-job-admin"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 60s
+
+  # ==========================================
   # Spring Boot Backend Service
+  # ==========================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: vulsystem-backend
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
     environment:
       # Database connection
       DB_HOST: mysql
@@ -49,38 +106,126 @@ services:
       DB_USERNAME: ${DB_USERNAME:-root}
       DB_PASSWORD: ${DB_PASSWORD:-changeme}
 
+      # XXL-Job configuration
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080/xxl-job-admin
+      XXL_JOB_ACCESS_TOKEN: ""
+      XXL_JOB_EXECUTOR_APPNAME: vulsystem-executor
+      XXL_JOB_EXECUTOR_PORT: 9999
+
       # Application settings
       SERVER_PORT: 8081
       FILE_UPLOAD_DIR: /app/uploads/
       OPENSCA_TOOL_PATH: /app/opensca/
 
-      # JVM options
-      JAVA_OPTS: "-Xms512m -Xmx1024m"
+      # JVM options (reduced for limited memory)
+      JAVA_OPTS: "-Xms128m -Xmx256m"
 
       # Timezone
       TZ: Asia/Shanghai
     volumes:
       # Persistent file uploads
       - upload_data:/app/uploads
-      # OpenSCA tools directory (mount from host if needed)
+      # OpenSCA tools directory
       - ./data:/app/opensca:ro
       # Application logs
-      - ./logs:/app/logs
+      - ./logs/backend:/app/logs
     ports:
       - "${BACKEND_PORT:-8081}:8081"
     depends_on:
       mysql:
         condition: service_healthy
+      xxl-job-admin:
+        condition: service_started  # Changed from service_healthy since health check is disabled
     networks:
       - vulsystem-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      # Using root path since /actuator/health is not configured
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
 
+  # ==========================================
+  # Flask Crawler Service
+  # ==========================================
+  flask-crawler:
+    build:
+      context: ./flask-crawler
+      dockerfile: Dockerfile
+    container_name: vulsystem-flask-crawler
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 600M
+        reservations:
+          memory: 300M
+    environment:
+      # Flask configuration
+      FLASK_APP: app.py
+      FLASK_ENV: production
+
+      # API Keys (from .env file)
+      # HTTP_PROXY and HTTPS_PROXY disabled - not needed in container and causes OpenAI client issues
+      # HTTP_PROXY: ${HTTP_PROXY:-}
+      # HTTPS_PROXY: ${HTTPS_PROXY:-}
+      ALI_API_KEY: ${ALI_API_KEY:-}
+
+      # Timezone
+      TZ: Asia/Shanghai
+    volumes:
+      # Application logs
+      - ./logs/flask:/app/logs
+      # Persistent NLTK data to avoid re-downloading
+      - nltk_data:/app/nltk_data
+    ports:
+      - "${FLASK_PORT:-5000}:5000"
+    networks:
+      - vulsystem-network
+    # Healthcheck - simply check if port 5000 is listening
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(2); result = s.connect_ex(('127.0.0.1', 5000)); s.close(); exit(0 if result == 0 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ==========================================
+  # Vue3 Frontend + Nginx
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend/VulSystem
+      dockerfile: Dockerfile
+    container_name: vulsystem-frontend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+        reservations:
+          memory: 100M
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - backend
+      - flask-crawler
+      - xxl-job-admin
+    networks:
+      - vulsystem-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+# ==========================================
 # Docker Volumes for data persistence
+# ==========================================
 volumes:
   mysql_data:
     driver: local
@@ -88,8 +233,13 @@ volumes:
   upload_data:
     driver: local
     name: vulsystem_uploads
+  nltk_data:
+    driver: local
+    name: vulsystem_nltk_data
 
+# ==========================================
 # Docker Network for service communication
+# ==========================================
 networks:
   vulsystem-network:
     driver: bridge

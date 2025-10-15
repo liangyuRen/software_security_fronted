@@ -89,188 +89,51 @@ public class ProjectUtil {
             throw new IOException("无法读取上传文件内容: " + e.getMessage());
         }
 
-        // 将字节数组保存到临时ZIP文件
-        File tempZipFile = new File(destDir.getParent(), uniqueDirName + ".zip");
-        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tempZipFile)) {
+        // 将字节数组保存到临时文件（保持原始扩展名）
+        String originalFilename = file.getOriginalFilename();
+        String tempFileExtension = ".tmp";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            tempFileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        File tempArchiveFile = new File(destDir.getParent(), uniqueDirName + tempFileExtension);
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tempArchiveFile)) {
             fos.write(fileBytes);
             fos.flush();
-            System.out.println("DEBUG: 成功将文件内容写入临时ZIP文件");
+            System.out.println("DEBUG: 成功将文件内容写入临时文件");
         } catch (IOException e) {
-            System.err.println("DEBUG: 写入临时ZIP文件失败: " + e.getMessage());
-            throw new IOException("无法创建临时ZIP文件: " + e.getMessage());
+            System.err.println("DEBUG: 写入临时文件失败: " + e.getMessage());
+            throw new IOException("无法创建临时文件: " + e.getMessage());
         }
 
-        System.out.println("DEBUG: 临时ZIP文件路径: " + tempZipFile.getAbsolutePath());
-        System.out.println("DEBUG: 临时ZIP文件是否存在: " + tempZipFile.exists());
-        System.out.println("DEBUG: 临时ZIP文件大小: " + tempZipFile.length() + " bytes");
-        System.out.println("DEBUG: 临时ZIP文件可读: " + tempZipFile.canRead());
+        System.out.println("DEBUG: 临时文件路径: " + tempArchiveFile.getAbsolutePath());
+        System.out.println("DEBUG: 临时文件是否存在: " + tempArchiveFile.exists());
+        System.out.println("DEBUG: 临时文件大小: " + tempArchiveFile.length() + " bytes");
+        System.out.println("DEBUG: 原始文件名: " + originalFilename);
 
-        // 检查文件头，确认文件格式
-        String fileFormat = "unknown";
-        if (tempZipFile.length() >= 4) {
-            try (java.io.FileInputStream fis = new java.io.FileInputStream(tempZipFile)) {
-                byte[] header = new byte[6];
-                int bytesRead = fis.read(header);
-
-                // ZIP文件的魔术数字是 0x50 0x4B (PK)
-                if (bytesRead >= 2 && header[0] == (byte)0x50 && header[1] == (byte)0x4B) {
-                    fileFormat = "zip";
-                    System.out.println("DEBUG: 检测到ZIP格式文件");
-                }
-                // 7z文件的魔术数字是 0x37 0x7A 0xBC 0xAF 0x27 0x1C
-                else if (bytesRead >= 6 && header[0] == (byte)0x37 && header[1] == (byte)0x7A &&
-                        header[2] == (byte)0xBC && header[3] == (byte)0xAF) {
-                    fileFormat = "7z";
-                    System.out.println("DEBUG: 检测到7z格式文件");
-                }
-                // RAR文件头 0x52 0x61 0x72 0x21 (Rar!)
-                else if (bytesRead >= 4 && header[0] == (byte)0x52 && header[1] == (byte)0x61 &&
-                        header[2] == (byte)0x72 && header[3] == (byte)0x21) {
-                    fileFormat = "rar";
-                    System.out.println("DEBUG: 检测到RAR格式文件");
-                }
-                else {
-                    System.out.println("DEBUG: 未知文件格式，文件头: " +
-                        String.format("0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X",
-                        header[0], header[1], header[2], header[3], header[4], header[5]));
-                }
-            } catch (Exception e) {
-                System.out.println("DEBUG: 文件头检查失败: " + e.getMessage());
-            }
-        } else {
-            System.out.println("DEBUG: 文件太小，可能不是有效的压缩文件");
-        }
-
-        // 如果不是ZIP格式，提供友好的错误信息
-        if (!"zip".equals(fileFormat)) {
-            String errorMsg = "";
-            switch (fileFormat) {
-                case "7z":
-                    errorMsg = "检测到7z格式文件。目前系统仅支持ZIP格式，请将文件重新打包为ZIP格式后上传。";
-                    break;
-                case "rar":
-                    errorMsg = "检测到RAR格式文件。目前系统仅支持ZIP格式，请将文件重新打包为ZIP格式后上传。";
-                    break;
-                default:
-                    errorMsg = "未知的文件格式或文件损坏。请确保上传的是有效的ZIP格式文件。";
-                    break;
-            }
-            System.err.println("DEBUG: " + errorMsg);
-            throw new IOException(errorMsg);
-        }
-
-        int fileCount = 0;
-        int dirCount = 0;
-
-        // 使用ZipFile代替ZipInputStream，支持更好的编码处理
-        try (ZipFile zipFile = new ZipFile(tempZipFile, java.nio.charset.Charset.forName("GBK"))) {
-            System.out.println("DEBUG: ZIP文件条目数量: " + zipFile.size());
-
-            java.util.Enumeration<? extends ZipEntry> entries = zipFile.entries();
-
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                System.out.println("DEBUG: 处理ZIP条目: " + entry.getName() +
-                                 ", 是否目录: " + entry.isDirectory() +
-                                 ", 大小: " + entry.getSize());
-
-                String entryName = entry.getName();
-                // 处理路径分隔符
-                entryName = entryName.replace('/', File.separatorChar);
-
-                File entryFile = new File(destDir, entryName);
-
-                // 防御路径遍历攻击
-                String canonicalDestPath = destDir.getCanonicalPath();
-                String canonicalFilePath = entryFile.getCanonicalPath();
-
-                boolean isValidPath = canonicalFilePath.equals(canonicalDestPath) ||
-                                    canonicalFilePath.startsWith(canonicalDestPath + File.separator);
-
-                if (!isValidPath) {
-                    System.out.println("DEBUG: 跳过潜在危险路径: " + entry.getName());
-                    continue;
-                }
-
-                if (entry.isDirectory()) {
-                    boolean created = entryFile.mkdirs();
-                    System.out.println("DEBUG: 创建目录 " + entryFile.getAbsolutePath() + ", 结果: " + created);
-                    dirCount++;
-                } else {
-                    // 确保父目录存在
-                    File parentDir = entryFile.getParentFile();
-                    if (!parentDir.exists()) {
-                        boolean created = parentDir.mkdirs();
-                        System.out.println("DEBUG: 创建父目录 " + parentDir.getAbsolutePath() + ", 结果: " + created);
-                    }
-
-                    // 处理文件重名
-                    if (entryFile.exists()) {
-                        String fileName = getUniqueFileName(entryFile);
-                        entryFile = new File(parentDir, fileName);
-                        System.out.println("DEBUG: 文件重名，重命名为: " + fileName);
-                    }
-
-                    // 写入文件
-                    try (java.io.InputStream inputStream = zipFile.getInputStream(entry);
-                         FileOutputStream fos = new FileOutputStream(entryFile);
-                         BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-
-                        byte[] buffer = new byte[4096];
-                        int len;
-                        long totalBytes = 0;
-
-                        while ((len = inputStream.read(buffer)) > 0) {
-                            bos.write(buffer, 0, len);
-                            totalBytes += len;
-                        }
-
-                        System.out.println("DEBUG: 写入文件 " + entryFile.getName() + ", 大小: " + totalBytes + " bytes");
-                        fileCount++;
-
-                    } catch (IOException e) {
-                        System.err.println("DEBUG: 写入文件失败 " + entryFile.getAbsolutePath() + ", 错误: " + e.getMessage());
-                        throw e;
-                    }
-                }
-            }
+        // 使用统一的解压工具
+        try {
+            ArchiveExtractor.extract(tempArchiveFile, destDir);
+            System.out.println("DEBUG: 解压完成");
         } catch (IOException e) {
-            System.err.println("DEBUG: ZIP文件处理失败: " + e.getMessage());
-            // 如果GBK编码失败，尝试UTF-8编码
-            try (ZipFile zipFile = new ZipFile(tempZipFile, java.nio.charset.Charset.forName("UTF-8"))) {
-                System.out.println("DEBUG: 使用UTF-8重新尝试解压...");
-                return unzipWithZipFile(zipFile, destDir);
-            } catch (IOException e2) {
-                System.err.println("DEBUG: UTF-8编码也失败，使用默认编码尝试...");
-                // 最后使用系统默认编码
-                try (ZipFile zipFile = new ZipFile(tempZipFile)) {
-                    return unzipWithZipFile(zipFile, destDir);
-                } catch (IOException e3) {
-                    System.err.println("DEBUG: 系统默认编码也失败，尝试使用ZipInputStream...");
-                    // 最后的备用方案：使用ZipInputStream
-                    return unzipWithInputStream(fileBytes, destDir);
-                }
-            }
+            System.err.println("DEBUG: 解压失败: " + e.getMessage());
+            throw e;
         } finally {
-            // 删除临时ZIP文件（延迟删除，确保文件未被占用）
-            if (tempZipFile.exists()) {
+            // 删除临时文件
+            if (tempArchiveFile.exists()) {
                 try {
-                    // 等待一小段时间确保文件句柄释放
                     Thread.sleep(100);
-                    boolean deleted = tempZipFile.delete();
-                    System.out.println("DEBUG: 删除临时ZIP文件: " + deleted);
+                    boolean deleted = tempArchiveFile.delete();
+                    System.out.println("DEBUG: 删除临时文件: " + deleted);
                     if (!deleted) {
-                        // 如果删除失败，标记为在JVM退出时删除
-                        tempZipFile.deleteOnExit();
-                        System.out.println("DEBUG: 标记临时ZIP文件在JVM退出时删除");
+                        tempArchiveFile.deleteOnExit();
+                        System.out.println("DEBUG: 标记临时文件在JVM退出时删除");
                     }
                 } catch (InterruptedException e) {
-                    System.out.println("DEBUG: 删除临时ZIP文件时中断: " + e.getMessage());
+                    System.out.println("DEBUG: 删除临时文件时中断: " + e.getMessage());
                 }
             }
         }
-
-        System.out.println("DEBUG: 解压完成，总计目录: " + dirCount + ", 文件: " + fileCount);
 
         // 检查最终目录内容
         File[] files = destDir.listFiles();
@@ -284,141 +147,6 @@ public class ProjectUtil {
         }
 
         return destDir.getAbsolutePath();
-    }
-
-    /**
-     * 使用ZipInputStream解压的备用方法
-     */
-    private String unzipWithInputStream(byte[] fileBytes, File destDir) throws IOException {
-        System.out.println("DEBUG: 使用ZipInputStream备用方案解压");
-        int fileCount = 0;
-        int dirCount = 0;
-
-        try (ZipInputStream zipIn = new ZipInputStream(new java.io.ByteArrayInputStream(fileBytes))) {
-            ZipEntry entry = zipIn.getNextEntry();
-            byte[] buffer = new byte[4096];
-
-            while (entry != null) {
-                System.out.println("DEBUG: [ZipInputStream] 处理ZIP条目: " + entry.getName() +
-                                 ", 是否目录: " + entry.isDirectory());
-
-                String entryName = entry.getName().replace('/', File.separatorChar);
-                File entryFile = new File(destDir, entryName);
-
-                // 安全检查
-                String canonicalDestPath = destDir.getCanonicalPath();
-                String canonicalFilePath = entryFile.getCanonicalPath();
-                boolean isValidPath = canonicalFilePath.equals(canonicalDestPath) ||
-                                    canonicalFilePath.startsWith(canonicalDestPath + File.separator);
-
-                if (!isValidPath) {
-                    System.out.println("DEBUG: [ZipInputStream] 跳过危险路径: " + entry.getName());
-                    zipIn.closeEntry();
-                    entry = zipIn.getNextEntry();
-                    continue;
-                }
-
-                if (entry.isDirectory()) {
-                    boolean created = entryFile.mkdirs();
-                    System.out.println("DEBUG: [ZipInputStream] 创建目录: " + entryFile.getName() + ", 结果: " + created);
-                    dirCount++;
-                } else {
-                    File parentDir = entryFile.getParentFile();
-                    if (!parentDir.exists()) {
-                        parentDir.mkdirs();
-                    }
-
-                    try (FileOutputStream fos = new FileOutputStream(entryFile);
-                         BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-                        int len;
-                        long totalBytes = 0;
-                        while ((len = zipIn.read(buffer)) > 0) {
-                            bos.write(buffer, 0, len);
-                            totalBytes += len;
-                        }
-                        System.out.println("DEBUG: [ZipInputStream] 写入文件: " + entryFile.getName() +
-                                         ", 大小: " + totalBytes + " bytes");
-                        fileCount++;
-                    }
-                }
-
-                zipIn.closeEntry();
-                entry = zipIn.getNextEntry();
-            }
-        }
-
-        System.out.println("DEBUG: [ZipInputStream] 解压完成，总计目录: " + dirCount + ", 文件: " + fileCount);
-        return destDir.getAbsolutePath();
-    }
-
-    /**
-     * 使用ZipFile解压的辅助方法
-     */
-    private String unzipWithZipFile(ZipFile zipFile, File destDir) throws IOException {
-        int fileCount = 0;
-        int dirCount = 0;
-
-        java.util.Enumeration<? extends ZipEntry> entries = zipFile.entries();
-
-        while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-
-            String entryName = entry.getName().replace('/', File.separatorChar);
-            File entryFile = new File(destDir, entryName);
-
-            // 安全检查
-            String canonicalDestPath = destDir.getCanonicalPath();
-            String canonicalFilePath = entryFile.getCanonicalPath();
-            boolean isValidPath = canonicalFilePath.equals(canonicalDestPath) ||
-                                canonicalFilePath.startsWith(canonicalDestPath + File.separator);
-
-            if (!isValidPath) {
-                continue;
-            }
-
-            if (entry.isDirectory()) {
-                entryFile.mkdirs();
-                dirCount++;
-            } else {
-                File parentDir = entryFile.getParentFile();
-                if (!parentDir.exists()) {
-                    parentDir.mkdirs();
-                }
-
-                try (java.io.InputStream inputStream = zipFile.getInputStream(entry);
-                     FileOutputStream fos = new FileOutputStream(entryFile);
-                     BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-
-                    byte[] buffer = new byte[4096];
-                    int len;
-                    while ((len = inputStream.read(buffer)) > 0) {
-                        bos.write(buffer, 0, len);
-                    }
-                    fileCount++;
-                }
-            }
-        }
-
-        System.out.println("DEBUG: 辅助解压完成，总计目录: " + dirCount + ", 文件: " + fileCount);
-        return destDir.getAbsolutePath();
-    }
-
-    /**
-     * 生成唯一文件名（解决同一ZIP内部文件重名问题）
-     */
-    private String getUniqueFileName(File file) {
-        String baseName = file.getName();
-        String parentDir = file.getParent();
-        String nameWithoutExt = baseName.replaceFirst("[.][^.]+$", "");
-        String extension = baseName.substring(nameWithoutExt.length());
-
-        int counter = 1;
-        while (file.exists()) {
-            String newName = nameWithoutExt + "_" + counter + extension;
-            file = new File(parentDir, newName);
-            counter++;
-        }
-        return file.getName();
     }
     
     public String getRiskLevel(int projectId,int riskThreshold) {

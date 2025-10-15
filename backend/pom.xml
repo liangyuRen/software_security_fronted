@@ -94,6 +94,13 @@
             <artifactId>xxl-job-core</artifactId>
             <version>2.4.0</version>
         </dependency>
+
+        <!-- Apache Commons Compress for multi-format archive support -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.21</version>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -134,7 +141,6 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>com.nju.backend.BackendApplication</mainClass>
-                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>
