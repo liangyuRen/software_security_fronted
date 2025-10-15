@@ -1,84 +1,127 @@
 <template>
-  <el-breadcrumb :separator-icon="ArrowRight" class="bread">
-    <el-breadcrumb-item :to="{ path: '/' }">
-      <el-icon color="#336FFF" size="14">
-        <DocumentCopy />
-      </el-icon>
-      <span class="bread-item">项目管理</span>
-    </el-breadcrumb-item>
-    <el-breadcrumb-item>项目信息</el-breadcrumb-item>
-  </el-breadcrumb>
-
-  <div class="data-infos">
-    <!-- <v-chart ref="mychart1" class="chart"></v-chart> -->
-    <DataCard title="项目风险等级分布" width="auto">
-      <template #main>
-        <WChart width="100%" height="160px" :option="option"></WChart>
-      </template>
-    </DataCard>
-    <DataCard title="项目统计">
-      <template #main>
-        <div class="static">
-          <el-statistic :value="projectStatistic?.projectNum" :value-style="{ fontSize: '36px', color: '#336fff' }">
-            <template #title>
-              <div style="display: inline-flex; align-items: center">
-                <el-icon style="margin-right: 4px" :size="14">
-                  <Tickets />
-                </el-icon>
-                已上传
-              </div>
-            </template>
-          </el-statistic>
-          <el-statistic :value="projectStatistic?.vulnerabilityNum"
-            :value-style="{ fontSize: '36px', color: '#336fff' }">
-            <template #title>
-              <div style="display: inline-flex; align-items: center">
-                <el-icon style="margin-right: 4px" :size="14">
-                  <Reading />
-                </el-icon>
-                发现漏洞数
-              </div>
-            </template>
-          </el-statistic>
-        </div>
-      </template>
-    </DataCard>
-  </div>
-
-  <DataCard title="项目仓库" width="auto">
-    <template #right>
-      <el-input style="width: 240px;margin-right: 20px;" placeholder="请输入仓库名" v-model="searchValue">
-        <template #suffix>
-          <el-icon>
-            <Search />
+  <div class="projects-view-container">
+    <!-- 统一的页面头部区域 -->
+    <div class="unified-header-section">
+      <div class="unified-header-content">
+        <!-- 标题部分 -->
+        <div class="title-section">
+          <el-icon color="#336FFF" size="28" class="title-icon">
+            <DocumentCopy />
           </el-icon>
-        </template>
-      </el-input>
-      <el-button type="primary" color="#336fff" @click="addFormVisible = true;">新建项目</el-button>
-    </template>
-    <template #main>
-      <div v-if="isLoading" style="display: flex; justify-content: center; align-items: center; height: 200px;">
-        <LoadingFrames size="large"></LoadingFrames>
-      </div>
-      <div v-else-if="filteredProjects.length > 0">
-        <PInfo v-for="info in filteredProjects" :key="info.id" :project="info" @delete="handleDeleteProject"
-          @edit="handleEditProject" @edit-file="handleEditProject"/>
-      </div>
-      <div v-else>
-        <el-empty description="暂无项目"></el-empty>
-      </div>
-    </template>
-  </DataCard>
+          <div class="title-text">
+            <h1 class="page-title">项目管理</h1>
+            <p class="page-subtitle">管理和监控您的项目安全状态</p>
+          </div>
+        </div>
 
-  <ProjectForm type="add" :visible="addFormVisible" @cancel="() => addFormVisible = false" @confirm="handleAddProject"
-    @close="() => addFormVisible = false" />
+        <!-- 统计卡片区域 -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper risk-icon">
+              <el-icon :size="24">
+                <Warning />
+              </el-icon>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">项目风险分布</div>
+              <WChart width="100%" height="120px" :option="option"></WChart>
+            </div>
+          </div>
 
+          <div class="stat-card">
+            <div class="stat-icon-wrapper project-icon">
+              <el-icon :size="24">
+                <Tickets />
+              </el-icon>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">已上传项目</div>
+              <div class="stat-value">{{ projectStatistic?.projectNum || 0 }}</div>
+            </div>
+          </div>
 
+          <div class="stat-card">
+            <div class="stat-icon-wrapper vuln-icon">
+              <el-icon :size="24">
+                <Reading />
+              </el-icon>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">发现漏洞数</div>
+              <div class="stat-value">{{ projectStatistic?.vulnerabilityNum || 0 }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 项目列表区域 -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <el-icon class="section-icon">
+            <Folder />
+          </el-icon>
+          项目仓库
+        </h2>
+        <div class="section-actions">
+          <el-input
+            v-model="searchValue"
+            placeholder="搜索项目名称..."
+            class="search-input"
+            clearable
+          >
+            <template #prefix>
+              <el-icon class="search-icon">
+                <Search />
+              </el-icon>
+            </template>
+          </el-input>
+          <el-button
+            type="primary"
+            class="add-project-btn"
+            @click="addFormVisible = true"
+          >
+            <el-icon class="btn-icon">
+              <Plus />
+            </el-icon>
+            新建项目
+          </el-button>
+        </div>
+      </div>
+
+      <div class="projects-content">
+        <div v-if="isLoading" class="loading-container">
+          <LoadingFrames size="large"></LoadingFrames>
+        </div>
+        <div v-else-if="filteredProjects.length > 0" class="projects-list">
+          <PInfo
+            v-for="info in filteredProjects"
+            :key="info.id"
+            :project="info"
+            @delete="handleDeleteProject"
+            @edit="handleEditProject"
+            @edit-file="handleEditProject"
+          />
+        </div>
+        <div v-else class="empty-state">
+          <el-empty description="暂无项目" :image-size="120" />
+        </div>
+      </div>
+    </div>
+
+    <ProjectForm
+      type="add"
+      :visible="addFormVisible"
+      @cancel="() => addFormVisible = false"
+      @confirm="handleAddProject"
+      @close="() => addFormVisible = false"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, Tickets, Reading, Search, DocumentCopy } from '@element-plus/icons-vue'
-import DataCard from '@/components/DataCard.vue';
+import { Tickets, Reading, Search, DocumentCopy, Warning, Folder, Plus } from '@element-plus/icons-vue'
 import WChart from '@/components/chart/index.vue'
 import PInfo from '@/components/Project/PInfo.vue';
 import { type ProjectInfo } from '@/components/Project/const';
@@ -420,34 +463,454 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.bread {
-  margin: 15px;
-
-  .el-breadcrumb__item {
-    height: 18px;
-  }
-
-  .bread-item {
-    color: #336FFF;
-    /* font-size: 16px; */
-    margin-left: 10px;
-    font-weight: bold;
-  }
+.projects-view-container {
+  container-name: projectsView;
+  container-type: inline-size;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  position: relative;
 }
 
-.data-infos {
+.projects-view-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  z-index: 0;
+}
+
+/* 统一的页面头部区域 */
+.unified-header-section {
+  position: relative;
+  z-index: 1;
+  margin: 24px 32px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+
+.unified-header-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.unified-header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.title-section {
   display: flex;
+  align-items: center;
+  margin-bottom: 32px;
 }
 
-.chart {
-  min-height: 200px;
+.title-icon {
+  margin-right: 20px;
+  filter: drop-shadow(0 4px 8px rgba(51, 111, 255, 0.4));
+  animation: float 3s ease-in-out infinite;
 }
 
-.static {
-  height: 150px;
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+.title-text {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1a202c;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-subtitle {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+/* 统计卡片网格 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  padding: 24px;
+  border-radius: 16px;
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+.stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.risk-icon {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #ffffff;
+}
+
+.project-icon {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: #ffffff;
+}
+
+.vuln-icon {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: #ffffff;
+}
+
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+/* 内容区域 */
+.content-section {
+  position: relative;
+  z-index: 1;
+  margin: 0 32px 32px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 24px 32px;
+  border-bottom: 2px solid #f1f5f9;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
 }
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-icon {
+  color: #667eea;
+  font-size: 24px;
+}
+
+.section-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.search-input {
+  width: 280px;
+}
+
+.search-input :deep(.el-input__wrapper) {
+  border-radius: 12px;
+  padding: 8px 16px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.search-input :deep(.el-input__wrapper:hover) {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.search-input :deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-icon {
+  color: #a0aec0;
+}
+
+.add-project-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.add-project-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.add-project-btn:active {
+  transform: translateY(0);
+}
+
+.btn-icon {
+  font-size: 18px;
+}
+
+.projects-content {
+  padding: 24px 32px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty-state {
+  padding: 60px 0;
+}
+
+/* 响应式设计 */
+@container projectsView (max-width: 1200px) {
+  .unified-header-section {
+    margin: 16px;
+    padding: 24px;
+  }
+
+  .content-section {
+    margin: 0 16px 16px;
+  }
+
+  .page-title {
+    font-size: 28px;
+  }
+}
+
+@container projectsView (max-width: 931px) {
+  .unified-header-section {
+    margin: 12px;
+    padding: 20px;
+  }
+
+  .content-section {
+    margin: 0 12px 12px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .section-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .add-project-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+  }
+
+  .title-section {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 24px;
+  }
+
+  .title-icon {
+    margin-bottom: 12px;
+    margin-right: 0;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container projectsView (max-width: 640px) {
+  .unified-header-section {
+    margin: 8px;
+    padding: 16px;
+  }
+
+  .content-section {
+    margin: 0 8px 8px;
+  }
+
+  .section-header {
+    padding: 16px;
+  }
+
+  .projects-content {
+    padding: 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .title-section {
+    margin-bottom: 20px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.unified-header-section {
+  animation: slideDown 0.8s ease-out;
+}
+
+.content-section {
+  animation: fadeInUp 0.6s ease-out;
+  animation-delay: 0.3s;
+  animation-fill-mode: both;
+}
+
+.stat-card {
+  animation: fadeInUp 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
 </style>

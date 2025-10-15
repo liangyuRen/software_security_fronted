@@ -52,7 +52,7 @@ const props = defineProps<{
       <td class="ref">
         <a :href="item.ref" target="_blank" class="ref-item-container">
           <div class="ref-item">
-            <img :src="'/src/assets/sourceIcon/'+getSourceIcon(item.ref)" alt="source" />
+            <img :src="getSourceIcon(item.ref)" alt="source" />
             <span>{{getSourceName(item.ref)}}</span>
           </div>
         </a>

@@ -1,69 +1,127 @@
 <template>
-  <!-- <TestTree /> -->
-  <el-breadcrumb :separator-icon="ArrowRight" class="bread">
-    <el-breadcrumb-item :to="{ path: '/optimize' }">
-      <el-icon color="#336FFF" size="14">
-        <Setting />
-      </el-icon>
-      <span class="bread-item">应用优化</span>
-    </el-breadcrumb-item>
-  </el-breadcrumb>
-  <section>
-    <DataSetting :threshold-name="stratage?.detectStrategy.endsWith('whiteList') ? '误报过滤阈值' : '相似度阈值'"
-      :threshold="stratage?.similarityThreshold ?? 0.5" :K="stratage?.maxDetectNums ?? 1"
-      @update:threshold="updateThreshold" @update:K="updateK" />
-    <div class="filter">
-      <h4>模型筛选</h4>
-      <div class="filter-line">
-        <div class="label">模型</div>
-        <ul class="filter-list">
-          <li v-for="item in modelFilterList" :key="item.value" @click="choosenFilter.model = item.value"
-            :class="{ 'chosen': item.value === choosenFilter.model }">
-            {{ item.label }}
-          </li>
-          <!-- <li class="choosen">全部</li>
-            <li>预训练模型</li>
-            <li>大语言模型</li> -->
-        </ul>
-      </div>
-      <div class="filter-line">
-        <div class="label">优化器</div>
-        <ul class="filter-list">
-          <li v-for="item in optimizeFilterList" :key="item.value" @click="choosenFilter.optimize = item.value"
-            :class="{ 'chosen': item.value === choosenFilter.optimize }">
-            {{ item.label }}
-          </li>
-        </ul>
+  <div class="optimize-view-container">
+    <!-- 统一的页面头部区域 -->
+    <div class="unified-header-section">
+      <div class="unified-header-content">
+        <!-- 标题部分 -->
+        <div class="title-section">
+          <el-icon color="#336FFF" size="28" class="title-icon">
+            <Setting />
+          </el-icon>
+          <div class="title-text">
+            <h1 class="page-title">应用优化</h1>
+            <p class="page-subtitle">配置检测策略和模型参数，提升漏洞检测准确率</p>
+          </div>
+        </div>
       </div>
     </div>
 
-
-    <div class="text">
-      <span>共{{ filteredList.length }}个模型，请选择需要的优化策略</span>
-      <el-tooltip class="box-item" effect="dark" content="提高阈值能提升检测准确率, 但有可能减少预测结果" placement="bottom">
-        <el-icon>
-          <InfoFilled />
-        </el-icon>
-      </el-tooltip>
+    <!-- 参数设置区域 -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <el-icon class="section-icon">
+            <Tools />
+          </el-icon>
+          参数配置
+        </h2>
+      </div>
+      <div class="section-content">
+        <DataSetting
+          :threshold-name="stratage?.detectStrategy.endsWith('whiteList') ? '误报过滤阈值' : '相似度阈值'"
+          :threshold="stratage?.similarityThreshold ?? 0.5"
+          :K="stratage?.maxDetectNums ?? 1"
+          @update:threshold="updateThreshold"
+          @update:K="updateK"
+        />
+      </div>
     </div>
-    <div class="llm-list">
-      <LlmInfo v-for="llm in filteredList" :key="llm.llmName" :is-vip="stratage?.isMember == 1"
-        :is-chosen="llm.llmName == stratage?.detectStrategy" :info="llm" @update:name="updateStratageName" />
+
+    <!-- 筛选区域 -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <el-icon class="section-icon">
+            <Filter />
+          </el-icon>
+          模型筛选
+        </h2>
+      </div>
+      <div class="section-content">
+        <div class="filter-container">
+          <div class="filter-line">
+            <div class="filter-label">模型类型</div>
+            <ul class="filter-list">
+              <li
+                v-for="item in modelFilterList"
+                :key="item.value"
+                @click="choosenFilter.model = item.value"
+                :class="{ 'chosen': item.value === choosenFilter.model }"
+                class="filter-item"
+              >
+                {{ item.label }}
+              </li>
+            </ul>
+          </div>
+          <div class="filter-line">
+            <div class="filter-label">优化器</div>
+            <ul class="filter-list">
+              <li
+                v-for="item in optimizeFilterList"
+                :key="item.value"
+                @click="choosenFilter.optimize = item.value"
+                :class="{ 'chosen': item.value === choosenFilter.optimize }"
+                class="filter-item"
+              >
+                {{ item.label }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
-  </section>
 
-  <!-- <DataCard title="应用优化方案" width="auto">
-    <template #main>
-
-    </template>
-</DataCard> -->
-
-
+    <!-- 模型列表区域 -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <el-icon class="section-icon">
+            <DataAnalysis />
+          </el-icon>
+          检测模型
+        </h2>
+        <div class="model-info">
+          <span class="model-count">共 {{ filteredList.length }} 个模型</span>
+          <el-tooltip
+            class="box-item"
+            effect="dark"
+            content="提高阈值能提升检测准确率, 但有可能减少预测结果"
+            placement="bottom"
+          >
+            <el-icon class="info-icon">
+              <InfoFilled />
+            </el-icon>
+          </el-tooltip>
+        </div>
+      </div>
+      <div class="section-content">
+        <div class="llm-list">
+          <LlmInfo
+            v-for="llm in filteredList"
+            :key="llm.llmName"
+            :is-vip="stratage?.isMember == 1"
+            :is-chosen="llm.llmName == stratage?.detectStrategy"
+            :info="llm"
+            @update:name="updateStratageName"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, Setting, InfoFilled } from '@element-plus/icons-vue'
-import DataCard from '@/components/DataCard.vue';
+import { Setting, InfoFilled, Tools, Filter, DataAnalysis } from '@element-plus/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue';
 import DataSetting from '@/components/Optimize/DataSetting.vue';
 import LlmInfo from '@/components/Optimize/LlmInfo.vue';
@@ -297,117 +355,370 @@ const changeStratage = () => {
 </script>
 
 <style scoped>
-.bread {
-  margin: 15px;
-  margin-bottom: 30px;
-
-  .el-breadcrumb__item {
-    height: 18px;
-  }
-
-  .bread-item {
-    color: #336FFF;
-    /* font-size: 16px; */
-    margin-left: 10px;
-    font-weight: bold;
-  }
+.optimize-view-container {
+  container-name: optimizeView;
+  container-type: inline-size;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  position: relative;
 }
 
-section {
-  padding: 0 20px;
+.optimize-view-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  z-index: 0;
 }
 
-.filter {
-  margin: 20px 0 20px;
-  padding: 15px;
-  border-radius: 5px;
-  background-color: #fff;
-  /* box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; */
-
-
-  h4 {
-    font-weight: bold;
-    margin-bottom: 18px;
-    border-bottom: #336FFF solid 1px;
-    padding-bottom: 10px;
-  }
-
-  .filter-line {
-    display: flex;
-    align-items: center;
-    margin: 8px 0;
-    font-size: 14px;
-
-
-    .label {
-      width: 80px;
-      color: #7a7979;
-
-    }
-
-    ul {
-      display: flex;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-
-
-      li {
-        padding: 5px 10px;
-        cursor: pointer;
-        margin-right: 20px;
-      }
-
-      li:hover,
-      .chosen {
-        background-color: #ecf5ff;
-        border-radius: 5px;
-        color: #336FFF;
-      }
-    }
-  }
+/* 统一的页面头部区域 */
+.unified-header-section {
+  position: relative;
+  z-index: 1;
+  margin: 24px 32px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
 }
 
-.text {
-  margin-bottom: 10px;
-  padding: 5px;
+.unified-header-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.unified-header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.title-section {
   display: flex;
-  /* align-items: bottom; */
-
-  span {
-    font-size: 14px;
-    color: #555557;
-    margin-right: 10px;
-  }
-
-  .el-icon {
-    font-size: 16px;
-    padding-top: 6px;
-  }
+  align-items: center;
 }
 
+.title-icon {
+  margin-right: 20px;
+  filter: drop-shadow(0 4px 8px rgba(51, 111, 255, 0.4));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+.title-text {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1a202c;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-subtitle {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+/* 内容区域 */
+.content-section {
+  position: relative;
+  z-index: 1;
+  margin: 0 32px 24px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 2px solid #f1f5f9;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-icon {
+  color: #667eea;
+  font-size: 24px;
+}
+
+.section-content {
+  padding: 32px;
+}
+
+/* 筛选区域 */
+.filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filter-line {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.filter-label {
+  min-width: 100px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.filter-item {
+  padding: 10px 20px;
+  border: 2px solid #e2e8f0;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  color: #64748b;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-item:hover {
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+}
+
+.filter-item.chosen {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* 模型信息 */
+.model-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.model-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  padding: 8px 16px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+}
+
+.info-icon {
+  font-size: 20px;
+  color: #667eea;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.info-icon:hover {
+  transform: scale(1.1);
+}
+
+/* 模型列表 */
 .llm-list {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  /* 每行放 3 个卡片 */
-  gap: 25px;
-  /* 卡片之间的间距，可以根据需要调节 */
-  /* padding: 16px; */
-  /* 网格容器的内边距 */
+  gap: 24px;
 }
 
-@media (max-width: 1000px) {
+/* 响应式设计 */
+@container optimizeView (max-width: 1200px) {
+  .unified-header-section {
+    margin: 16px;
+    padding: 24px;
+  }
+
+  .content-section {
+    margin: 0 16px 16px;
+  }
+
+  .page-title {
+    font-size: 28px;
+  }
+}
+
+@container optimizeView (max-width: 1000px) {
   .llm-list {
     grid-template-columns: repeat(2, 1fr);
-    /* 每行放 2 个卡片 */
   }
 }
 
-@media (max-width: 700px) {
-  .llm-list {
-    grid-template-columns: repeat(1, 1fr);
-    /* 每行放 2 个卡片 */
+@container optimizeView (max-width: 931px) {
+  .unified-header-section {
+    margin: 12px;
+    padding: 20px;
+  }
+
+  .content-section {
+    margin: 0 12px 12px;
+  }
+
+  .section-content {
+    padding: 20px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+  }
+
+  .title-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .title-icon {
+    margin-bottom: 12px;
+    margin-right: 0;
+  }
+
+  .filter-line {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-label {
+    margin-bottom: 8px;
   }
 }
+
+@container optimizeView (max-width: 700px) {
+  .llm-list {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+@container optimizeView (max-width: 640px) {
+  .unified-header-section {
+    margin: 8px;
+    padding: 16px;
+  }
+
+  .content-section {
+    margin: 0 8px 8px;
+  }
+
+  .section-content {
+    padding: 16px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .model-info {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.unified-header-section {
+  animation: slideDown 0.8s ease-out;
+}
+
+.content-section {
+  animation: fadeInUp 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+.content-section:nth-child(2) { animation-delay: 0.1s; }
+.content-section:nth-child(3) { animation-delay: 0.2s; }
+.content-section:nth-child(4) { animation-delay: 0.3s; }
 </style>

@@ -26,7 +26,7 @@ const emit = defineEmits(['update:name'])
         <div v-if="info.infoTag" class="tag" :style="{ backgroundColor: '#E4FBE5', color: '#3EC01E' }">{{ info.infoTag
         }}
         </div>
-        <div v-if="info.needVip" class="tag" :style="{ backgroundColor: '#FFF5EB', color: '#FE8B00' }">会员专享</div>
+        <div v-if="info.needVip" class="tag vip-tag">会员专享</div>
         <el-tag v-if="isChosen" type="primary">已选择</el-tag>
       </div>
 
@@ -56,111 +56,172 @@ const emit = defineEmits(['update:name'])
 <style scoped>
 .llm-card {
   cursor: pointer;
-  padding: 10px 15px;
-  padding-bottom: 0;
-  background-color: #fff;
-  /* box-shadow: rgba(99, 99, 99, 0.116) 0px 2px 8px 0px; */
-  border-radius: 8px;
-  /* height: 160px; */
+  padding: 16px 20px;
+  padding-bottom: 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-
-  .header,
-  .footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .header {
-    margin-bottom: 10px;
-
-    h4 {
-      font-weight: 600;
-    }
-
-    .right {
-      display: flex;
-      justify-content: space-around;
-    }
-  }
-
-  .text {
-    /* flex: 1; */
-    height: 68px;
-    width: 100%;
-    font-size: 14px;
-    color: #555557;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    -webkit-line-clamp: 3;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-  }
-
-  .footer {
-    /* border-top: 1px solid #efefefd5; */
-    height: 40px;
-
-    .data-info {
-      display: flex;
-
-      .data-block {
-        display: flex;
-        align-items: center;
-        margin-right: 10px;
-      }
-
-      .pointer {
-        height: 10px;
-        width: 10px;
-        border-radius: 5px;
-        margin-right: 5px;
-      }
-
-      .data {
-        font-size: 12px;
-      }
-    }
-
-    .llm-button {
-      display: none;
-      /* margin-bottom: 20px; */
-    }
-
-    .no-vip {
-      font-size: 10px;
-      color: #8B8C8F;
-    }
-
-  }
-
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  min-height: 180px;
 }
 
 .llm-card:hover {
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-  transform: translateY(-5px);
-  transition: all 0.5s;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-color: #667eea;
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.2);
+}
 
-  .llm-button {
-    display: block;
-    position: relative;
-    bottom: 10px;
-  }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.llm-card:hover .header {
+  border-bottom-color: #e2e8f0;
+}
+
+.header h4 {
+  font-weight: 700;
+  font-size: 16px;
+  color: #1a202c;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header .right {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.text {
+  height: 68px;
+  width: 100%;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  margin-bottom: 12px;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 40px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.llm-card:hover .footer {
+  border-top-color: #e2e8f0;
+}
+
+.data-info {
+  display: flex;
+  gap: 12px;
+}
+
+.data-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pointer {
+  height: 10px;
+  width: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.data {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.llm-button {
+  display: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.llm-card:hover .llm-button {
+  display: inline-flex;
+}
+
+.llm-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.no-vip {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 6px 12px;
+  background: #f1f5f9;
+  border-radius: 6px;
 }
 
 .tag {
-  padding: 0 10px;
-  height: 20px;
-  border-radius: 10px;
-  font-size: 10px;
-  line-height: 20px;
-  cursor: pointer;
-  margin: 0 5px;
-  /* overflow: hidden;
+  padding: 4px 12px;
+  height: auto;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
   white-space: nowrap;
-  text-overflow: ellipsis;
-  -o-text-overflow: ellipsis; */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.tag:hover {
+  transform: scale(1.05);
+}
+
+.vip-tag {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+}
+
+/* 添加动画效果 */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.llm-card {
+  animation: slideIn 0.5s ease-out;
+  animation-fill-mode: both;
 }
 </style>

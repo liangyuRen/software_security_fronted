@@ -1,79 +1,131 @@
 
 <template>
-  <el-breadcrumb :separator-icon="ArrowRight" class="bread">
-    <el-breadcrumb-item :to="{ path: '/' }">
-      <el-icon color="#336FFF" size="14">
-        <DocumentCopy />
-      </el-icon>
-      <span class="bread-item">项目管理</span>
-    </el-breadcrumb-item>
-    <el-breadcrumb-item>项目综合分析</el-breadcrumb-item>
-  </el-breadcrumb>
-
-  <DataCard title="漏洞情况统计" width="auto">
-    <template #main>
-      <WChart width="100%" height="200px" :option="dangerChangeOption"></WChart>
-    </template>
-  </DataCard>
-  <div class="data-infos">
-    <!-- <v-chart ref="mychart1" class="chart"></v-chart> -->
-    <DataCard title="待解决项目">
-      <template #main>
-        <div v-if="isLoading" style="display: flex; justify-content: center; align-items: center; height: 200px;">
-          <LoadingFrames size="large"></LoadingFrames>
-        </div>
-        <template v-else-if="dangerProjectInfos.length > 0">
-          <PInfo v-for="info in dangerProjectInfos" :key="info.id" :project="info" :canEdit="false" />
-        </template>
-        <template v-else>
-          <el-empty description="暂无待解决项目"></el-empty>
-        </template>
-
-      </template>
-    </DataCard>
-    <div class="right-info">
-      <DataCard title="组件统计">
-        <template #main>
-          <div class="static">
-            <el-statistic :value="thirdLibraryNum" :value-style="{ fontSize: '36px', color: '#336fff' }">
-              <template #title>
-                <div style="display: inline-flex; align-items: center">
-                  <el-icon style="margin-right: 4px" :size="14">
-                    <Tickets />
-                  </el-icon>
-                  已扫描
-                </div>
-              </template>
-            </el-statistic>
-            <el-statistic :value="vulNum" :value-style="{ fontSize: '36px', color: '#336fff' }">
-              <template #title>
-                <div style="display: inline-flex; align-items: center">
-                  <el-icon style="margin-right: 4px" :size="14">
-                    <Reading />
-                  </el-icon>
-                  漏洞组件数
-                </div>
-              </template>
-            </el-statistic>
+  <div class="analysis-view-container">
+    <!-- 统一的页面头部区域 -->
+    <div class="unified-header-section">
+      <div class="unified-header-content">
+        <!-- 标题部分 -->
+        <div class="title-section">
+          <el-icon color="#336FFF" size="28" class="title-icon">
+            <TrendCharts />
+          </el-icon>
+          <div class="title-text">
+            <h1 class="page-title">项目综合分析</h1>
+            <p class="page-subtitle">全面分析项目漏洞趋势与组件分布</p>
           </div>
-        </template>
-      </DataCard>
+        </div>
+      </div>
+    </div>
 
-      <DataCard title="各项编程语言占比">
-        <template #main>
-          <WChart width="100%" height="250px" :option="languageOption"></WChart>
-        </template>
-      </DataCard>
+    <!-- 漏洞情况统计 -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <el-icon class="section-icon">
+            <DataAnalysis />
+          </el-icon>
+          漏洞情况统计
+        </h2>
+      </div>
+      <div class="chart-content">
+        <WChart width="100%" height="280px" :option="dangerChangeOption"></WChart>
+      </div>
+    </div>
+
+    <!-- 两栏布局 -->
+    <div class="two-column-layout">
+      <!-- 待解决项目 -->
+      <div class="content-section left-column">
+        <div class="section-header">
+          <h2 class="section-title">
+            <el-icon class="section-icon">
+              <Warning />
+            </el-icon>
+            待解决项目
+          </h2>
+        </div>
+        <div class="projects-content">
+          <div v-if="isLoading" class="loading-container">
+            <LoadingFrames size="large"></LoadingFrames>
+          </div>
+          <template v-else-if="dangerProjectInfos.length > 0">
+            <PInfo
+              v-for="info in dangerProjectInfos"
+              :key="info.id"
+              :project="info"
+              :canEdit="false"
+            />
+          </template>
+          <template v-else>
+            <div class="empty-state">
+              <el-empty description="暂无待解决项目" :image-size="100"></el-empty>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- 右侧统计 -->
+      <div class="right-column">
+        <!-- 组件统计 -->
+        <div class="content-section stat-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <el-icon class="section-icon">
+                <Grid />
+              </el-icon>
+              组件统计
+            </h2>
+          </div>
+          <div class="stats-content">
+            <div class="stat-item">
+              <div class="stat-icon-wrapper scanned-icon">
+                <el-icon :size="24">
+                  <Tickets />
+                </el-icon>
+              </div>
+              <div class="stat-details">
+                <div class="stat-label">已扫描</div>
+                <div class="stat-value">{{ thirdLibraryNum }}</div>
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon-wrapper vuln-icon">
+                <el-icon :size="24">
+                  <Reading />
+                </el-icon>
+              </div>
+              <div class="stat-details">
+                <div class="stat-label">漏洞组件数</div>
+                <div class="stat-value">{{ vulNum }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 编程语言占比 -->
+        <div class="content-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <el-icon class="section-icon">
+                <PieChart />
+              </el-icon>
+              编程语言占比
+            </h2>
+          </div>
+          <div class="chart-content">
+            <WChart width="100%" height="280px" :option="languageOption"></WChart>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, Tickets, Reading, DocumentCopy } from '@element-plus/icons-vue'
+import { Tickets, Reading, Warning, TrendCharts, DataAnalysis, Grid, PieChart } from '@element-plus/icons-vue'
 import WChart from '@/components/chart/index.vue'
-import DataCard from '@/components/DataCard.vue';
 import PInfo from '@/components/Project/PInfo.vue';
+import LoadingFrames from "@/components/LoadingFrames.vue";
 import { type ProjectInfo } from '@/components/Project/const';
 import { onMounted, ref } from 'vue';
 import { getCompanyStatic, type StatisticsInfo } from '@/components/Statistic/const';
@@ -307,38 +359,416 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.bread {
-  margin: 15px;
-  margin-bottom: 30px;
+.analysis-view-container {
+  container-name: analysisView;
+  container-type: inline-size;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  position: relative;
+}
 
-  .el-breadcrumb__item {
-    height: 18px;
+.analysis-view-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  z-index: 0;
+}
+
+/* 统一的页面头部区域 */
+.unified-header-section {
+  position: relative;
+  z-index: 1;
+  margin: 24px 32px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+
+.unified-header-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.unified-header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.title-section {
+  display: flex;
+  align-items: center;
+}
+
+.title-icon {
+  margin-right: 20px;
+  filter: drop-shadow(0 4px 8px rgba(51, 111, 255, 0.4));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+.title-text {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1a202c;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-subtitle {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+/* 内容区域 */
+.content-section {
+  position: relative;
+  z-index: 1;
+  margin: 0 32px 24px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 24px 32px;
+  border-bottom: 2px solid #f1f5f9;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-icon {
+  color: #667eea;
+  font-size: 24px;
+}
+
+.chart-content {
+  padding: 32px;
+}
+
+/* 两栏布局 */
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 24px;
+  margin: 0 32px 32px;
+}
+
+.left-column {
+  margin: 0;
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 0;
+}
+
+.right-column .content-section {
+  margin: 0;
+}
+
+.projects-content {
+  padding: 24px 32px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.empty-state {
+  padding: 40px 0;
+}
+
+/* 统计项 */
+.stat-section {
+  flex-shrink: 0;
+}
+
+.stats-content {
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-item:hover {
+  transform: translateX(8px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.stat-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.stat-item:hover .stat-icon-wrapper {
+  transform: scale(1.1);
+}
+
+.scanned-icon {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: #ffffff;
+}
+
+.vuln-icon {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: #ffffff;
+}
+
+.stat-details {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+/* 响应式设计 */
+@container analysisView (max-width: 1200px) {
+  .two-column-layout {
+    grid-template-columns: 1fr;
   }
 
-  .bread-item {
-    color: #336FFF;
-    /* font-size: 16px; */
-    margin-left: 10px;
-    font-weight: bold;
+  .right-column {
+    flex-direction: row;
+    gap: 24px;
+  }
+
+  .right-column .content-section {
+    flex: 1;
+  }
+
+  .unified-header-section {
+    margin: 16px;
+    padding: 24px;
+  }
+
+  .content-section {
+    margin: 0 16px 24px;
+  }
+
+  .two-column-layout {
+    margin: 0 16px 16px;
+  }
+
+  .page-title {
+    font-size: 28px;
   }
 }
 
-.data-infos {
-  display: flex;
+@container analysisView (max-width: 931px) {
+  .unified-header-section {
+    margin: 12px;
+    padding: 20px;
+  }
 
-  .right-info {
-    min-width: 330px;
-    width: 30%;
-    display: flex;
+  .content-section {
+    margin: 0 12px 20px;
+  }
+
+  .two-column-layout {
+    margin: 0 12px 12px;
+  }
+
+  .right-column {
     flex-direction: column;
   }
+
+  .section-header {
+    padding: 20px;
+  }
+
+  .chart-content {
+    padding: 20px;
+  }
+
+  .projects-content {
+    padding: 20px;
+  }
+
+  .stats-content {
+    padding: 20px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+  }
+
+  .title-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .title-icon {
+    margin-bottom: 12px;
+    margin-right: 0;
+  }
 }
 
-.static {
-  height: 150px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
+@container analysisView (max-width: 640px) {
+  .unified-header-section {
+    margin: 8px;
+    padding: 16px;
+  }
+
+  .content-section {
+    margin: 0 8px 16px;
+  }
+
+  .two-column-layout {
+    margin: 0 8px 8px;
+  }
+
+  .section-header {
+    padding: 16px;
+  }
+
+  .chart-content {
+    padding: 16px;
+  }
+
+  .projects-content {
+    padding: 16px;
+  }
+
+  .stats-content {
+    padding: 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
 }
+
+/* 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.unified-header-section {
+  animation: slideDown 0.8s ease-out;
+}
+
+.content-section {
+  animation: fadeInUp 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+.content-section:nth-of-type(2) { animation-delay: 0.1s; }
+.content-section:nth-of-type(3) { animation-delay: 0.2s; }
+.content-section:nth-of-type(4) { animation-delay: 0.3s; }
 </style>

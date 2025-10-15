@@ -222,89 +222,240 @@ const handleRegister = () => {
 
 <style scoped>
 .login {
-  background: url('../assets/bg.jpg');
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   width: 100%;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.login::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: drift 20s linear infinite;
+}
+
+@keyframes drift {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(50px, 50px);
+  }
 }
 
 /* 中间偏右 */
 .card {
+  position: relative;
+  z-index: 1;
   min-height: 40vh;
-  background-color: #fff;
-  border-radius: 12px;
-  min-width: 350px;
-  width: 24%;
-  transform: translateX(60%);
-  padding: 25px 30px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  min-width: 380px;
+  width: 26%;
+  transform: translateX(50%);
+  padding: 40px 36px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  h2 {
-    margin-bottom: 15px;
-    font-weight: 600;
+.card:hover {
+  transform: translateX(50%) translateY(-8px);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+}
+
+.card h2 {
+  margin-bottom: 28px;
+  font-weight: 800;
+  font-size: 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+.input-container {
+  margin: 16px 0;
+  display: flex;
+  align-items: start;
+  flex-direction: column;
+}
+
+.input-title {
+  font-size: 13px;
+  color: #475569;
+  margin-left: 4px;
+  margin-bottom: 8px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.card :deep(.el-input) {
+  height: 44px;
+  margin: 4px 0;
+  border-radius: 12px;
+}
+
+.card :deep(.el-input__wrapper) {
+  border-radius: 12px;
+  padding: 8px 16px;
+  border: 2px solid #e2e8f0;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.card :deep(.el-input__wrapper:hover) {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.card :deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.card :deep(.el-input__prefix) {
+  color: #667eea;
+  font-size: 18px;
+}
+
+.other-container {
+  font-size: 13px;
+  text-align: center;
+  margin-top: 12px;
+  color: #64748b;
+}
+
+.other-container .link {
+  color: #667eea;
+  cursor: pointer;
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.other-container .link:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.switch-container {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.switch-container .link {
+  color: #667eea;
+  cursor: pointer;
+  font-weight: 700;
+  margin-left: 6px;
+  transition: color 0.3s ease;
+}
+
+.switch-container .link:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.confirm-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-radius: 12px;
+  height: 48px;
+  cursor: pointer;
+  margin: 32px 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  border: none;
+}
+
+.confirm-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(102, 126, 234, 0.5);
+}
+
+.confirm-button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.confirm-text {
+  margin-left: 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .card {
+    width: 35%;
+    transform: translateX(40%);
+  }
+
+  .card:hover {
+    transform: translateX(40%) translateY(-8px);
+  }
+}
+
+@media (max-width: 931px) {
+  .card {
+    width: 50%;
+    transform: translateX(20%);
+  }
+
+  .card:hover {
+    transform: translateX(20%) translateY(-8px);
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    width: 90%;
+    min-width: 300px;
+    transform: translateX(0);
+    padding: 32px 24px;
+  }
+
+  .card:hover {
+    transform: translateY(-8px);
+  }
+
+  .card h2 {
     font-size: 24px;
   }
+}
 
-  .input-container{
-    margin: 4px 0;
-    display: flex;
-    align-items: start;
-    flex-direction: column;
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-
-  .input-title{
-    font-size: 12px;
-    color: #333;
-    margin-left: 4px;
-    font-weight: bold;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
 
-  .el-input {
-    height: 36px;
-    margin: 4px 0;
-    border-radius: 6px;
-  }
-
-  .other-container {
-    font-size: 12px;
-
-    .link{
-      color: #336fff;
-      cursor: pointer;
-      font-weight: bold;
-    }
-  }
-
-  .switch-container {
-    text-align: center;
-    margin-top: 15px;
-    font-size: 12px;
-    color: #666;
-
-    .link {
-      color: #336fff;
-      cursor: pointer;
-      font-weight: bold;
-      margin-left: 4px;
-    }
-  }
-
-  .confirm-button{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #409eff;
-    color: #fff;
-    border-radius: 6px;
-    height: 36px;
-    cursor: pointer;
-    margin: 25px 0 10px;
-  }
-
-  .confirm-text{
-    margin-left: 4px;
-    font-weight: bold;
-  }
+.card {
+  animation: fadeIn 0.6s ease-out;
 }
 </style>

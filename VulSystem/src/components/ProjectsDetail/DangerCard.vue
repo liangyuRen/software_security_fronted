@@ -29,8 +29,8 @@ const statusTag = computed(() => {
       text: '高风险'
     },
     ['Medium']: {
-      color: '#FE8B00',
-      bgc: '#FFF5EB',
+      color: '#8b5cf6',
+      bgc: '#f3e8ff',
       text: '中风险'
     },
     ['Low']: {
