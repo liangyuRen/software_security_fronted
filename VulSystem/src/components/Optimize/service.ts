@@ -1,7 +1,8 @@
 import axios from '@/utils/request'
 import type { CompanyStrategy, StrategyRequest } from './const'
 export const changeStrategy = (data: CompanyStrategy) => {
-  const companyId = +(localStorage.getItem('companyId') ?? 1)
+  const companyId =1
+  //const companyId = +(localStorage.getItem('companyId') ?? 1)
   const requestData: StrategyRequest = {
     companyId,
     similarityThreshold: data.similarityThreshold,
@@ -12,7 +13,8 @@ export const changeStrategy = (data: CompanyStrategy) => {
 }
 
 export const getStrategy = () => {
-  const companyId = localStorage.getItem('companyId') || 1
+  const companyId =1
+  //const companyId = localStorage.getItem('companyId') || 1
   return axios.get('/company/getStrategy', {
     params: {
       companyId,

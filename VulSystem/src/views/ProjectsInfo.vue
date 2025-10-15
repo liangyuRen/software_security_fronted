@@ -138,7 +138,7 @@ const option = ref({
       emphasis: {
         focus: 'series'
       },
-      data: [2],
+      data: [5],
       itemStyle: {
         borderRadius: 5,
         // color: '#EE6666' // 设置颜色
@@ -298,11 +298,13 @@ const filterProjects = () => {
   console.log("filtered",filteredProjects.value);
 }
 watch(searchValue, filterProjects);
-
+//本地的companyid类型为string,这里要转换
 async function getProjects(companyId: number) {
   isLoading.value = true;
   const page = 1;
   const pageSize = 10;
+  //改动描述：修改companyid的值以确保能加载出项目列表
+  companyId=1;
 
   projectInfos.value = [];
   await getProjectList(page, pageSize, companyId).then((res) => {
@@ -325,7 +327,8 @@ async function getProjects(companyId: number) {
 // project statistic
 const projectStatistic = ref<StatisticsInfo>()
 onMounted(async () => {
-  const companyId = localStorage.getItem('companyId');
+  const companyId =1
+  //const companyId = localStorage.getItem('companyId');
   await getProjects(companyId);
   filterProjects();
   // 获取统计信息

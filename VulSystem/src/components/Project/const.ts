@@ -30,10 +30,12 @@ export interface ProjectInfo {
    * 项目语言
    */
   language: string
+  //这里companyid为什么是string,不应该是number吗
   /**
    * 公司名
    */
-  companyId: string
+  companyId: number
+  //companyId: string
   /**
    * 文件路径
    */
