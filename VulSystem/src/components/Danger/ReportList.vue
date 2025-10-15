@@ -95,10 +95,11 @@ const displayedPages = computed(() => {
 <style scoped>
 .danger-card {
   flex: 1;
-  border-radius: 6px;
-  background-color: #fff;
-  margin: 15px;
-  border: 1px solid #d1d9e0;
+  background-color: #ffffff;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
 }
 
 .card-header {
@@ -124,48 +125,85 @@ const displayedPages = computed(() => {
 .pagination {
   display: flex;
   align-items: center;
-  justify-content: end;
+  justify-content: center;
   gap: 8px;
-  margin: 20px 25px;
+  margin: 24px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 0;
+  border-top: 1px solid #e2e8f0;
 }
 
 .page-btn {
-  padding: 6px 10px;
-  border: 1px solid transparent;
-  background-color: rgba(255, 255, 255, 0);
-  color: #21252a;
-  font-weight: bold;
+  padding: 8px 16px;
+  border: 2px solid #e2e8f0;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  color: #475569;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.4s;
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-width: 40px;
 }
 
-.controller{
-  color: #096be0;
+.controller {
+  color: #667eea;
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+}
+
+.controller:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46a0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .page-btn:hover:not(:disabled) {
-  border: 1px solid #dcdfe6;
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
 }
 
 .page-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #ffffff;
-  border-color: #096be0;
-  background-color: #096be0;
+  border-color: #667eea;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .page-btn:disabled {
   cursor: not-allowed;
-  color: #c0c4cc;
-  background-color: #f5f7fa;
+  color: #94a3b8;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  transform: none;
+  box-shadow: none;
+}
+
+.page-info {
+  margin-right: 20px;
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .page-info span {
-  :last-child{
-    margin-left: 15px;
-  }
-  color: #21252a;
-  font-size: 13px;
-  font-weight: bold;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.page-info span:last-child {
+  margin-left: 12px;
+  color: #667eea;
+  font-weight: 600;
 }
 </style>

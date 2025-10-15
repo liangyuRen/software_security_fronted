@@ -68,8 +68,9 @@ const props = defineProps<{
 <style scoped>
 .danger-card-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
   border-spacing: 0;
+  background: #ffffff;
 }
 
 .danger-card-table .id {
@@ -102,7 +103,12 @@ const props = defineProps<{
 }
 
 .danger-card-table .level .el-tag {
-  margin-right: 5px;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .danger-card-table .ref {
@@ -111,40 +117,52 @@ const props = defineProps<{
 }
 
 .danger-card-table th {
-  background-color: #f6f8fa;
-  color: #333;
-  font-weight: bold;
-  padding: 10px;
-  border-bottom: 1px solid #d1d9e0;
-  border-radius: 6px;
-  line-height: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #374151;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 16px;
+  border-bottom: 2px solid #e2e8f0;
+  line-height: 20px;
   text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  letter-spacing: 0.025em;
+}
+
+.danger-card-table th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.danger-card-table th:last-child {
+  border-top-right-radius: 12px;
 }
 
 .danger-card-table td {
-  padding: 10px;
-  height: 20px;
-  border-radius: 6px;
-  border-bottom: 1px solid #d1d9e0;
-  color: rgb(31, 35, 40);
-}
-
-.danger-card-table tr:last-child td {
-  border-bottom: none;
+  padding: 16px;
+  height: auto;
+  border-bottom: 1px solid #f1f5f9;
+  color: #374151;
+  font-size: 14px;
+  line-height: 20px;
+  vertical-align: middle;
 }
 
 .danger-card-table tbody tr {
-  transition: background-color 0.3s;
-}
-
-.danger-card-table tbody td {
-  padding: 6px 10px;
-  height: 18px;
-  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .danger-card-table tbody tr:hover {
-  background-color: #f6f8fa;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  transform: scale(1.01);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  z-index: 5;
+}
+
+.danger-card-table tbody tr:hover td {
+  border-bottom-color: #e2e8f0;
 }
 
 .ref-item-container {
@@ -159,35 +177,87 @@ const props = defineProps<{
 }
 
 .ref-item img {
-  height: 18px;
-  width: 18px;
-  border-radius: 4px;
-  margin-right: 5px;
+  height: 20px;
+  width: 20px;
+  border-radius: 6px;
+  margin-right: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.ref-item:hover img {
+  transform: scale(1.1);
 }
 
 .ref-item span {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 20px;
-  font-weight: bold;
-  color: #096be0;
+  font-weight: 600;
+  color: #667eea;
+  transition: color 0.3s ease;
 }
 
-.details-icon{
-  border: 1px solid #096be0;
-  border-radius: 6px;
-  min-width: 40px;
-  height: 24px;
-  line-height: 24px;
+.ref-item:hover span {
+  color: #5a67d8;
+}
+
+.details-icon {
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  min-width: 48px;
+  height: 28px;
+  line-height: 28px;
   display: flex;
-  margin-left: 10px;
+  margin-left: 12px;
   justify-content: center;
   align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
 
-  span{
-    color: #096be0;
-    font-weight: bold;
-    font-size: 13px;
-    text-align: center;
+.details-icon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.details-icon span {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* 添加一些微妙的动画效果 */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
+
+.danger-card-table tbody tr {
+  animation: slideIn 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.danger-card-table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+.danger-card-table tbody tr:nth-child(2) { animation-delay: 0.1s; }
+.danger-card-table tbody tr:nth-child(3) { animation-delay: 0.15s; }
+.danger-card-table tbody tr:nth-child(4) { animation-delay: 0.2s; }
+.danger-card-table tbody tr:nth-child(5) { animation-delay: 0.25s; }
+.danger-card-table tbody tr:nth-child(6) { animation-delay: 0.3s; }
+.danger-card-table tbody tr:nth-child(7) { animation-delay: 0.35s; }
+.danger-card-table tbody tr:nth-child(8) { animation-delay: 0.4s; }
+.danger-card-table tbody tr:nth-child(9) { animation-delay: 0.45s; }
+.danger-card-table tbody tr:nth-child(10) { animation-delay: 0.5s; }
 </style>
