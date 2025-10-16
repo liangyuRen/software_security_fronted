@@ -35,21 +35,34 @@
   </div>
   <DataCard title="组件分析" width="auto">
     <template #right>
-      <!-- <el-input style="width: 240px;margin-right: 20px;" placeholder="请输入组件名称">
-        <template #suffix>
-          <el-icon>
-            <Search />
-          </el-icon>
-        </template>
-  </el-input> -->
-      <SbomForm :project-name="projectInfo?.projectName || ''" :project-id="projectInfo?.id || 1" />
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <el-radio-group v-model="viewMode" size="small">
+          <el-radio-button value="tree">
+            <el-icon><Files /></el-icon>
+            树状图
+          </el-radio-button>
+          <el-radio-button value="list">
+            <el-icon><List /></el-icon>
+            列表
+          </el-radio-button>
+        </el-radio-group>
+        <!-- <el-input style="width: 240px;margin-right: 20px;" placeholder="请输入组件名称">
+          <template #suffix>
+            <el-icon>
+              <Search />
+            </el-icon>
+          </template>
+        </el-input> -->
+        <SbomForm :project-name="projectInfo?.projectName || ''" :project-id="projectInfo?.id || 1" />
+      </div>
     </template>
     <template #main>
       <div v-if="isTreeLoading" style="display: flex; justify-content: center; align-items: center; height: 200px;">
         <LoadingFrames size="large"></LoadingFrames>
       </div>
       <template v-else>
-        <div class="tree-container">
+        <!-- Tree View -->
+        <div v-if="viewMode === 'tree'" class="tree-container">
           <!-- <el-tree :data="treeData" node-key="id" default-expand-all :props="{ class: 'custom-node' }" /> -->
           <el-tree :data="treeData" node-key="id" default-expand-all :props="{ class: 'custom-node' }">
             <template #default="{ node, data }">
@@ -76,6 +89,26 @@
 
           </el-tree>
         </div>
+
+        <!-- List View -->
+        <div v-else class="list-container">
+          <el-table :data="flattenedListData" stripe style="width: 100%">
+            <el-table-column prop="name" label="组件名称" min-width="200">
+              <template #default="{ row }">
+                <div style="display: flex; align-items: center;">
+                  <el-icon style="margin: 0 8px 0 0px;" size="16">
+                    <Document />
+                  </el-icon>
+                  {{ row.name }}
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="version" label="版本" width="120" />
+            <el-table-column prop="vendor" label="供应商" width="150" />
+            <el-table-column prop="language" label="语言" width="100" />
+            <el-table-column prop="level" label="层级" width="80" />
+          </el-table>
+        </div>
       </template>
 
     </template>
@@ -93,12 +126,12 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, DocumentCopy, Document, Folder, Files } from '@element-plus/icons-vue'
+import { ArrowRight, DocumentCopy, Document, Folder, Files, List } from '@element-plus/icons-vue'
 import WChart from '@/components/chart/index.vue'
 import DataCard from '@/components/DataCard.vue';
 import SbomForm from '@/components/ProjectsDetail/SbomForm.vue';
 import { type ProjectInfoDetail } from '@/components/Project/const';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import type { DangerInfo } from '@/components/Danger/const';
 import { api } from './service';
 import DangerCard from '@/components/ProjectsDetail/DangerCard.vue';
@@ -263,6 +296,44 @@ interface Tree {
 
 const treeData = ref<Tree[]>()
 const isTreeLoading = ref<boolean>(false)
+const viewMode = ref<'tree' | 'list'>('tree')
+const sbomData = ref<SbomItem[]>([])
+
+// Flatten SBOM data for list view
+interface FlatListItem {
+  name: string
+  version: string
+  vendor: string
+  language: string
+  level: number
+}
+
+const flattenedListData = computed<FlatListItem[]>(() => {
+  if (!sbomData.value.length) return []
+
+  const result: FlatListItem[] = []
+
+  const flatten = (items: SbomItem[], level: number = 0) => {
+    items.forEach(item => {
+      if (item.vendor && item.name) {
+        result.push({
+          name: `${item.vendor}:${item.name}`,
+          version: item.version || 'N/A',
+          vendor: item.vendor,
+          language: item.language || 'N/A',
+          level: level
+        })
+      }
+
+      if (item.children && item.children.length > 0) {
+        flatten(item.children, level + 1)
+      }
+    })
+  }
+
+  flatten(sbomData.value)
+  return result
+})
 onMounted(() => {
   getProjectDetail()
 
@@ -283,6 +354,7 @@ onMounted(() => {
 
             // 处理sbomItem对象，例如打印或访问其中的属性
             console.log(sbomItem);
+            sbomData.value = sbomItem
             treeData.value = convertSbomToTree(sbomItem)
             // 访问特定属性，例如：sbomItem.someProperty
             // alert(sbomItem.someProperty); // 具体属性根据实际需求来获取
@@ -353,5 +425,23 @@ onMounted(() => {
     border-bottom: 1px solid #e4e4e4c2;
   }
 
+}
+
+.list-container {
+  margin: 15px;
+
+  .el-table {
+    font-size: 14px;
+
+    .el-table__row {
+      &:hover {
+        background-color: #f5f7fa;
+      }
+    }
+
+    .el-icon svg {
+      color: #336fff;
+    }
+  }
 }
 </style>

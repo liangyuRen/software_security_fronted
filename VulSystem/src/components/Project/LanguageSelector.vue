@@ -9,8 +9,8 @@ interface Tab {
 const emit = defineEmits(['select']);
 
 const tabs: Tab[] = [
-  { id: 'java', name: 'Java' },
-  { id: 'cpp', name: 'C/C++' },
+  { id: 'java', name: '目前系统支持JavaScript,PHP,Ruby,Golang,Rust,Erlang,Python，Java' },
+ // { id: 'cpp', name: 'C/C++' },
 ]
 
 const selectedTab = ref<string>('java')
@@ -42,7 +42,7 @@ const handleSelect = (tabId: string): void => {
 <style scoped>
 .language-selector {
   width: 100%;
-  max-width: 600px;
+  max-width: 1500px;
 }
 
 .label {
@@ -56,33 +56,36 @@ const handleSelect = (tabId: string): void => {
   background-color: transparent;
   border: #dcdfe6 1px solid;
   border-radius: 8px;
-  padding: 4px 4px;
+  padding: 8px 8px;
   position: relative;
 }
 
 .tab {
   flex: 1;
-  height: 30px;
-  padding: 0 24px;
+  height: 60px;
+  padding: 0 32px;
   border: none;
   background: none;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
-  color: #57606a;
+  color: #f4f5f6;
   cursor: pointer;
   position: relative;
   transition: all 0.3s ease;
   border-radius: 6px;
   outline: none;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tab:hover {
-  color: #24292f;
+  color: #edeef0;
 }
 
 .tab.selected {
-  color: #24292f;
+  color: #0e0e0e;
   font-weight: 700;
 }
 

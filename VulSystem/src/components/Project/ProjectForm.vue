@@ -34,7 +34,7 @@ const newProject = reactive<ProjectInfo>(props.project ??
 const formRef = ref<FormInstance>();
 const currentFile = ref<File | null>(null);
 const fileUploadServerBaseURL = '/api'; // 通过Nginx代理转发到后端
-
+//const fileUploadServerBaseURL = 'http://localhost:8081';
 const getTitle = computed(() => {
   switch (props.type) {
     case 'add':
@@ -206,8 +206,8 @@ watch(() => props.project, (project) => {
 
 <template>
   <!-- 新增项目的对话框 -->
-  <el-dialog v-model="dialogVisible" :title="getTitle" width="600">
-    <el-form ref="formRef" :model="newProject" label-width="auto" style="max-width: 600px" :rules="rules">
+  <el-dialog v-model="dialogVisible" :title="getTitle" width="900" class="project-dialog">
+    <el-form ref="formRef" :model="newProject" label-width="120px" style="max-width: 850px; margin: 0 auto;" :rules="rules" class="project-form">
       <el-form-item label="项目名称" prop="name" v-if="type == 'add' || type == 'edit'">
         <el-input v-model="newProject.name" placeholder="请输入项目名称" />
       </el-form-item>
@@ -299,6 +299,136 @@ watch(() => props.project, (project) => {
 </template>
 
 <style scoped>
+/* 对话框样式 */
+.project-dialog {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.project-dialog :deep(.el-dialog) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.project-dialog :deep(.el-dialog__header) {
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid #ebeef5;
+  background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
+  position: relative;
+}
+
+.project-dialog :deep(.el-dialog__header::after) {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e0e6ed, transparent);
+}
+
+.project-dialog :deep(.el-dialog__title) {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.project-dialog :deep(.el-dialog__body) {
+  padding: 30px 24px;
+  background: #ffffff;
+  position: relative;
+}
+
+.project-dialog :deep(.el-dialog__body::before) {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(64, 158, 255, 0.1), transparent);
+}
+
+.project-dialog :deep(.el-dialog__footer) {
+  padding: 20px 24px 24px;
+  border-top: 1px solid #ebeef5;
+  background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
+  position: relative;
+}
+
+.project-dialog :deep(.el-dialog__footer::before) {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e0e6ed, transparent);
+}
+
+/* 表单样式 */
+.project-form {
+  margin: 0 !important;
+  position: relative;
+}
+
+.project-form :deep(.el-form-item) {
+  margin-bottom: 32px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 4px;
+  transition: all 0.3s ease;
+}
+
+.project-form :deep(.el-form-item:hover) {
+  background: rgba(248, 249, 250, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.project-form :deep(.el-form-item__label) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 45px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+  position: relative;
+  z-index: 1;
+}
+
+.project-form :deep(.el-input__wrapper) {
+  height: 45px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px #dcdfe6 inset;
+  transition: all 0.3s ease;
+}
+
+.project-form :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #c0c4cc inset;
+}
+
+.project-form :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 2px #409eff inset;
+}
+
+.project-form :deep(.el-textarea__inner) {
+  min-height: 100px;
+  border-radius: 8px;
+  font-size: 15px;
+  padding: 12px 16px;
+  resize: vertical;
+}
+
+.project-form :deep(.el-input-number) {
+  width: 200px;
+}
+
+.project-form :deep(.el-input-number .el-input__wrapper) {
+  height: 45px;
+}
+
 .tips {
   display: flex;
   align-items: center;
@@ -311,32 +441,105 @@ watch(() => props.project, (project) => {
   font-size: 20px;
   line-height: 16px;
   height: 20px;
+  transition: color 0.3s ease;
 }
 
+.question-icon:hover {
+  color: #409eff;
+}
+
+/* 上传区域样式 */
 .upload-file-container {
   display: flex;
   flex-direction: column;
   align-items: start;
+  gap: 16px;
 
-  span {
-    font-size: 13px;
+  .el-upload {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .el-button {
+    height: 42px;
+    padding: 0 24px;
+    font-size: 15px;
+    border-radius: 8px;
     font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .el-button--primary {
+    background: linear-gradient(135deg, #409eff 0%, #66b3ff 100%);
+    border: none;
+    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+  }
+
+  .el-button--primary:hover {
+    background: linear-gradient(135deg, #337ecc 0%, #5aa3ff 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+  }
+
+  .el-button--danger {
+    background: linear-gradient(135deg, #f56c6c 0%, #ff8080 100%);
+    border: none;
+    box-shadow: 0 2px 8px rgba(245, 108, 108, 0.3);
+  }
+
+  .el-button--danger:hover {
+    background: linear-gradient(135deg, #e45656 0%, #ff6666 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 108, 108, 0.4);
   }
 
   .selected-file {
-    margin-top: 10px;
     display: flex;
-    flex-direction: row;
+    align-items: center;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-top: 8px;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+
+    span {
+      font-size: 14px;
+      font-weight: 500;
+      color: #495057;
+      flex: 1;
+      word-break: break-all;
+    }
   }
 
   .remove-button {
-    margin-left: 10px;
+    margin-left: 12px;
   }
 
   .upload-success {
     color: #67c23a;
-    font-weight: bold;
-    margin-left: 10px;
+    font-weight: 600;
+    margin-left: 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .upload-success::before {
+    content: "✓";
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background: #67c23a;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 18px;
+    font-size: 12px;
   }
 }
 
@@ -346,27 +549,147 @@ watch(() => props.project, (project) => {
   align-items: start;
   width: 100%;
   position: relative;
-  margin: 0 20px;
-  span {
-    font-size: 13px;
+  gap: 16px;
+
+  :deep(.el-upload-dragger) {
+    width: 100%;
+    height: 200px;
+    border: 2px dashed #d9d9d9;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  :deep(.el-upload-dragger:hover) {
+    border-color: #409eff;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f3ff 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(64, 158, 255, 0.15);
+  }
+
+  :deep(.el-upload-dragger.is-dragover) {
+    border-color: #409eff;
+    background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
+    transform: scale(1.02);
+  }
+
+  :deep(.el-icon--upload) {
+    font-size: 48px;
+    color: #c0c4cc;
+    transition: color 0.3s ease;
+  }
+
+  :deep(.el-upload-dragger:hover .el-icon--upload) {
+    color: #409eff;
+  }
+
+  :deep(.el-upload__text) {
+    font-size: 16px;
+    color: #606266;
     font-weight: 500;
+    line-height: 1.6;
+  }
+
+  :deep(.el-upload__tip) {
+    font-size: 14px;
+    color: #909399;
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #409eff;
   }
 
   .selected-file {
     display: flex;
-    flex-direction: row;
-    justify-content: center;
     align-items: center;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+
+    span {
+      font-size: 14px;
+      font-weight: 500;
+      color: #495057;
+      flex: 1;
+      word-break: break-all;
+    }
   }
 
   .remove-button {
-    margin-left: 10px;
+    margin-left: 12px;
   }
 
   .upload-success {
     color: #67c23a;
-    font-weight: bold;
-    margin-left: 10px;
+    font-weight: 600;
+    margin-left: 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
+
+  .upload-success::before {
+    content: "✓";
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background: #67c23a;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 18px;
+    font-size: 12px;
+  }
+}
+
+/* 底部按钮样式 */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.dialog-footer .el-button {
+  height: 42px;
+  padding: 0 28px;
+  font-size: 15px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.dialog-footer .el-button--primary {
+  background: linear-gradient(135deg, #409eff 0%, #66b3ff 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+}
+
+.dialog-footer .el-button--primary:hover {
+  background: linear-gradient(135deg, #337ecc 0%, #5aa3ff 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+}
+
+.dialog-footer .el-button--default {
+  background: #ffffff;
+  border: 1px solid #dcdfe6;
+  color: #606266;
+}
+
+.dialog-footer .el-button--default:hover {
+  background: #f5f7fa;
+  border-color: #c0c4cc;
+  color: #409eff;
 }
 </style>
