@@ -139,8 +139,11 @@ import { getSbomFile } from '@/components/ProjectsDetail/service';
 import type { SbomItem, SbomResponse } from '@/components/ProjectsDetail/const';
 import { ElMessage } from 'element-plus';
 const props = defineProps<{
-  projectId: number
+  projectId: number | string
 }>();
+
+// 确保projectId是number类型
+const projectId = computed(() => Number(props.projectId))
 const timeFormatter = (dateString: string) => {
   // 将字符串转换为 Date 对象
   const date = new Date(dateString);
@@ -212,7 +215,7 @@ const option = ref({
 });
 
 const getProjectDetail = () => {
-  api.getProjectDetail(props.projectId)
+  api.getProjectDetail(projectId.value)
     .then(res => {
       projectInfo.value = res.data.obj
       const newOptionSeries = [{
@@ -271,14 +274,20 @@ const getProjectDetail = () => {
 // 转换函数
 const convertSbomToTree = (sbomItems: SbomItem[]): Tree[] => {
   return sbomItems
-    .filter(item => item.vendor && item.name) // 过滤掉 label 和 name 为空的项
+  //.filter(item => item.name) // 只过滤掉 name 为空的项
     .map(item => {
       // 创建 Tree 对象
-      // 创建 Tree 对象
-      let label_name: string = 'undefined'
+      let label_name: string = 'default'
       if (item.vendor && item.name) {
         label_name = item.vendor + ':' + item.name
       }
+      if (!item.vendor && item.name) {
+        label_name = item.name
+      }
+      if (!item.name && item.paths) {
+        label_name = item.paths[0]
+      }
+
       const treeItem: Tree = {
         id: item.id,
         label: label_name,
@@ -315,11 +324,11 @@ const flattenedListData = computed<FlatListItem[]>(() => {
 
   const flatten = (items: SbomItem[], level: number = 0) => {
     items.forEach(item => {
-      if (item.vendor && item.name) {
+      if (item.name && item.version) {
         result.push({
-          name: `${item.vendor}:${item.name}`,
+          name: item.vendor ? `${item.vendor}:${item.name}` : item.name,
           version: item.version || 'N/A',
-          vendor: item.vendor,
+          vendor: item.vendor || 'N/A',
           language: item.language || 'N/A',
           level: level
         })
@@ -338,7 +347,7 @@ onMounted(() => {
   getProjectDetail()
 
   isTreeLoading.value = true
-  getSbomFile(props.projectId, '.json', 'sbom')
+  getSbomFile(projectId.value, '.json', 'sbom')
     .then(res => {
       // 创建一个FileReader来读取Blob
       const reader = new FileReader();
@@ -375,7 +384,7 @@ onMounted(() => {
       ElMessage.error('获取sbom结构失败')
     })
     .finally(() => isTreeLoading.value = false)
-  api.getVulList(props.projectId)
+  api.getVulList(projectId.value)
     .then(res => {
       dangerList.value = res.data.obj
     })

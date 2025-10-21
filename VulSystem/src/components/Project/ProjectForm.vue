@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, reactive, ref, watch} from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { type ProjectInfo } from './const';
 import { QuestionFilled } from "@element-plus/icons-vue";
 import LanguageSelector from "@/components/Project/LanguageSelector.vue";
@@ -70,9 +70,9 @@ function handleChangeLanguage(language: string) {
 }
 
 // tooltip content
-function getTooltipContent(language: string): string{
+function getTooltipContent(language: string): string {
   console.log("当前项目", newProject)
-  switch (language){
+  switch (language) {
     case 'java':
       return "上传项目压缩包，支持 zip/7z/tar/gz/rar 等格式。<br>兼容 Windows、Linux、Mac 系统压缩的文件。<br>最大可接受的文件大小：100MB。";
     case 'cpp':
@@ -206,15 +206,16 @@ watch(() => props.project, (project) => {
 
 <template>
   <!-- 新增项目的对话框 -->
-  <el-dialog v-model="dialogVisible" :title="getTitle" width="900" class="project-dialog">
-    <el-form ref="formRef" :model="newProject" label-width="120px" style="max-width: 850px; margin: 0 auto;" :rules="rules" class="project-form">
+  <el-dialog v-model="dialogVisible" :title="getTitle" width="900" center class="project-dialog">
+    <el-form ref="formRef" :model="newProject" label-width="120px" style="max-width: 850px; margin: 0 auto;"
+      :rules="rules" class="project-form">
       <el-form-item label="项目名称" prop="name" v-if="type == 'add' || type == 'edit'">
         <el-input v-model="newProject.name" placeholder="请输入项目名称" />
       </el-form-item>
-      <el-form-item label="项目描述"  v-if="type == 'add' || type == 'edit'">
+      <el-form-item label="项目描述" v-if="type == 'add' || type == 'edit'">
         <el-input v-model="newProject.description" type="textarea" placeholder="请输入项目描述" />
       </el-form-item>
-      <el-form-item label="风险阈值" prop="risk_threshold"  v-if="type == 'add' || type == 'edit'">
+      <el-form-item label="风险阈值" prop="risk_threshold" v-if="type == 'add' || type == 'edit'">
         <el-input-number v-model="newProject.risk_threshold" :min="0" :max="20" />
         <div class="tips">
           <el-tooltip content="风险阈值是指项目中漏洞数量超过多少时，项目状态会变为风险状态。<br>当风险阈值为零时，代表高风险风险阈值。" raw-content placement="top">
@@ -231,9 +232,7 @@ watch(() => props.project, (project) => {
         <div class="upload-file-container">
           <el-upload ref="uploader" :auto-upload="false" :on-change="handleFileChange" :show-file-list="false"
             :multiple="false" :action="fileUploadServerBaseURL + '/project/uploadFile'"
-            :on-success="handleFileUploadSuccess"
-            :on-error="handleFileUploadError"
-          >
+            :on-success="handleFileUploadSuccess" :on-error="handleFileUploadError">
             <el-button type="primary">选择文件</el-button>
             <div class="tips">
               <el-tooltip :content="getTooltipContent(newProject.language)" raw-content placement="top">
@@ -256,10 +255,7 @@ watch(() => props.project, (project) => {
         <div class="upload-file-drag-container">
           <el-upload ref="uploader" :auto-upload="false" :on-change="handleFileChange" :show-file-list="false"
             :multiple="false" :action="fileUploadServerBaseURL + '/project/uploadFile'"
-            :on-success="handleFileUploadSuccess" drag
-            style="width: 100%"
-            :on-error="handleFileUploadError"
-          >
+            :on-success="handleFileUploadSuccess" drag style="width: 100%" :on-error="handleFileUploadError">
             <el-icon class="el-icon--upload">
               <upload-filled />
             </el-icon>
@@ -267,14 +263,15 @@ watch(() => props.project, (project) => {
               <span>点击此处选择文件或将文件拖拽到此处上传</span>
             </div>
             <template #tip>
-                <div class="el-upload__tip" style="display: flex; justify-content: flex-start; align-items: center; gap: 10px">
-                  支持扩展名：zip, 7z, tar, gz, rar（兼容各操作系统）
-                  <el-tooltip :content="getTooltipContent(newProject.language)" raw-content placement="top">
-                    <el-icon class="question-icon">
-                      <QuestionFilled />
-                    </el-icon>
-                  </el-tooltip>
-                </div>
+              <div class="el-upload__tip"
+                style="display: flex; justify-content: flex-start; align-items: center; gap: 10px">
+                支持扩展名：zip, 7z, tar, gz, rar（兼容各操作系统）
+                <el-tooltip :content="getTooltipContent(newProject.language)" raw-content placement="top">
+                  <el-icon class="question-icon">
+                    <QuestionFilled />
+                  </el-icon>
+                </el-tooltip>
+              </div>
             </template>
           </el-upload>
           <div v-if="currentFile" class="selected-file">
@@ -309,6 +306,28 @@ watch(() => props.project, (project) => {
 .project-dialog :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
+  position: relative !important;
+  margin: 0 auto !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.project-dialog :deep(.el-dialog__wrapper) {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* 确保弹窗内容可以滚动 */
+.project-dialog :deep(.el-dialog) {
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+}
+
+/* 防止body被锁定 */
+.project-dialog :deep(.el-overlay) {
+  pointer-events: auto !important;
 }
 
 .project-dialog :deep(.el-dialog__header) {

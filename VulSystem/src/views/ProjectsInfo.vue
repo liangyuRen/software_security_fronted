@@ -96,13 +96,28 @@
         </div>
         <div v-else-if="filteredProjects.length > 0" class="projects-list">
           <PInfo
-            v-for="info in filteredProjects"
+            v-for="info in paginatedProjects"
             :key="info.id"
             :project="info"
             @delete="handleDeleteProject"
             @edit="handleEditProject"
             @edit-file="handleEditProject"
           />
+          <!-- 分页组件 -->
+          <div class="pagination-wrapper" v-if="filteredProjects.length > pageSize">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[10, 20, 50]"
+              :small="false"
+              :disabled="isLoading"
+              :background="true"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="filteredProjects.length"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
+          </div>
         </div>
         <div v-else class="empty-state">
           <el-empty description="暂无项目" :image-size="120" />
@@ -125,7 +140,7 @@ import { Tickets, Reading, Search, DocumentCopy, Warning, Folder, Plus } from '@
 import WChart from '@/components/chart/index.vue'
 import PInfo from '@/components/Project/PInfo.vue';
 import { type ProjectInfo } from '@/components/Project/const';
-import {onMounted, ref, watch} from 'vue';
+import {onMounted, ref, watch, computed} from 'vue';
 import ProjectForm from '@/components/Project/ProjectForm.vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
@@ -332,43 +347,74 @@ const projectInfos = ref<ProjectInfo[]>([]);
 const searchValue = ref('')
 const filteredProjects = ref<ProjectInfo[]>([]);
 
+// 分页相关状态
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalProjects = ref(0)
+
+// 计算当前页显示的项目
+const paginatedProjects = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredProjects.value.slice(start, end)
+})
+
 const filterProjects = () => {
   console.log("1projectInfos.value", projectInfos.value);
   console.log("1filtered",filteredProjects.value);
   if ((searchValue.value ?? '') === '') {
     filteredProjects.value = projectInfos.value;
-    return;
+  } else {
+    filteredProjects.value = projectInfos.value.filter((project) => {
+      if(project.name?.includes(searchValue.value ?? '')) {
+        return true;
+      }
+    });
   }
-  filteredProjects.value = projectInfos.value.filter((project) => {
-    if(project.name?.includes(searchValue.value ?? '')) {
-      return true;
-    }
-  });
+  // 搜索时重置到第一页
+  currentPage.value = 1;
   console.log("projectInfos.value", projectInfos.value);
   console.log("filtered",filteredProjects.value);
 }
+
+// 分页事件处理
+const handleSizeChange = (val: number) => {
+  pageSize.value = val
+  currentPage.value = 1
+}
+
+const handleCurrentChange = (val: number) => {
+  currentPage.value = val
+}
 watch(searchValue, filterProjects);
 //本地的companyid类型为string,这里要转换
-async function getProjects(companyId: number) {
+async function getProjects(companyId: number, page?: number) {
   isLoading.value = true;
-  const page = 1;
-  const pageSize = 10;
+  const currentPageNum = page || currentPage.value;
+  const pageSizeVal = pageSize.value;
   //改动描述：修改companyid的值以确保能加载出项目列表
   companyId=1;
 
-  projectInfos.value = [];
-  await getProjectList(page, pageSize, companyId).then((res) => {
-    const data: ProjectListResponse = res;
-    if (data.code !== 200) {
+  if (currentPageNum === 1) {
+    projectInfos.value = [];
+    await getProjectList(1, 1000, companyId).then((res) => { // 获取所有数据用于计算总数
+      const data: ProjectListResponse = res;
+      if (data.code !== 200) {
+        ElMessage.error('获取项目列表失败');
+        console.error(data);
+        return;
+      }
+      projectInfos.value = data.obj;
+      totalProjects.value = data.obj.length;
+      filteredProjects.value = data.obj;
+    }).catch((err) => {
+      console.log(err);
       ElMessage.error('获取项目列表失败');
-      console.error(data);
-      return;
-    }
-    projectInfos.value = data.obj;
-  }).catch((err) => {
-    console.log(err);
-    ElMessage.error('获取项目列表失败');
-  });
+    });
+  } else {
+    // 对于其他页面，我们使用已有的数据进行分页
+    // 这里假设我们已经在第一次加载时获取了所有数据
+  }
 
   isLoading.value = false;
 }
@@ -760,6 +806,80 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+  padding: 16px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.pagination-wrapper :deep(.el-pagination) {
+  --el-pagination-button-bg-color: #ffffff;
+  --el-pagination-hover-color: #667eea;
+  --el-pagination-active-color: #667eea;
+  --el-pagination-bg-color: #ffffff;
+  --el-pagination-border-radius: 8px;
+}
+
+.pagination-wrapper :deep(.el-pagination .el-pager li) {
+  border-radius: 8px;
+  margin: 0 2px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.pagination-wrapper :deep(.el-pagination .el-pager li:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+.pagination-wrapper :deep(.el-pagination .el-pager li.is-active) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+}
+
+.pagination-wrapper :deep(.el-pagination .btn-prev),
+.pagination-wrapper :deep(.el-pagination .btn-next) {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.pagination-wrapper :deep(.el-pagination .btn-prev:hover),
+.pagination-wrapper :deep(.el-pagination .btn-next:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+.pagination-wrapper :deep(.el-pagination .el-pagination__sizes) {
+  margin-right: 16px;
+}
+
+.pagination-wrapper :deep(.el-pagination .el-select .el-input__wrapper) {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.pagination-wrapper :deep(.el-pagination .el-select .el-input__wrapper:hover) {
+  border-color: #667eea;
+}
+
+.pagination-wrapper :deep(.el-pagination .el-pagination__jump) {
+  margin-left: 16px;
+}
+
+.pagination-wrapper :deep(.el-pagination .el-input__wrapper) {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.pagination-wrapper :deep(.el-pagination .el-input__wrapper:hover) {
+  border-color: #667eea;
 }
 
 .empty-state {

@@ -31,6 +31,7 @@ const instance = axios.create({
   // 这里放网络请求的公共配置
   timeout: 500000,
   baseURL: '/api', // 通过Nginx代理转发到后端
+//baseURL: 'http://localhost:8081',
 })
 
 // 拦截器----发送数据之前
