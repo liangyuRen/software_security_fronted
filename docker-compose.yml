@@ -11,9 +11,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 400M
+          memory: 800M
         reservations:
-          memory: 200M
+          memory: 400M
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-changeme}
       MYSQL_DATABASE: ${DB_NAME:-kulin}
@@ -95,9 +95,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 400M
+          memory: 800M
         reservations:
-          memory: 200M
+          memory: 400M
     environment:
       # Database connection
       DB_HOST: mysql
@@ -117,8 +117,8 @@ services:
       FILE_UPLOAD_DIR: /app/uploads/
       OPENSCA_TOOL_PATH: /app/opensca/
 
-      # JVM options (reduced for limited memory)
-      JAVA_OPTS: "-Xms128m -Xmx256m"
+      # JVM options (optimized for file uploads)
+      JAVA_OPTS: "-Xms256m -Xmx512m"
 
       # Timezone
       TZ: Asia/Shanghai

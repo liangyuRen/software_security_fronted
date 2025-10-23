@@ -25,6 +25,27 @@ public interface ProjectService {
     @Async("projectAnalysisExecutor")
     void asyncParseCProject(String filePath);
 
+    @Async("projectAnalysisExecutor")
+    void asyncParseGoProject(String filePath);
+
+    @Async("projectAnalysisExecutor")
+    void asyncParseJavascriptProject(String filePath);
+
+    @Async("projectAnalysisExecutor")
+    void asyncParsePythonProject(String filePath);
+
+    @Async("projectAnalysisExecutor")
+    void asyncParsePhpProject(String filePath);
+
+    @Async("projectAnalysisExecutor")
+    void asyncParseRubyProject(String filePath);
+
+    @Async("projectAnalysisExecutor")
+    void asyncParseRustProject(String filePath);
+
+    @Async("projectAnalysisExecutor")
+    void asyncParseErlangProject(String filePath);
+
     String uploadFile(MultipartFile file) throws IOException;
 
     List<VulnerabilityVO> getVulnerabilities(int id);

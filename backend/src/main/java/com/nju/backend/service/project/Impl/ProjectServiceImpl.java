@@ -56,6 +56,9 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
     @Autowired
     private String getOpenscaToolPath;
 
+    @org.springframework.beans.factory.annotation.Value("${flask.crawler.url}")
+    private String flaskCrawlerUrl;
+
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
@@ -103,7 +106,7 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
         System.out.println("开始解析Java项目: " + filePath);
         try {
             RestTemplate restTemplate = new RestTemplate();
-            String url = UriComponentsBuilder.fromHttpUrl("http://localhost:5000/parse/pom_parse")
+            String url = UriComponentsBuilder.fromHttpUrl(flaskCrawlerUrl + "/parse/pom_parse")
                     .queryParam("project_folder", filePath)
                     .encode() // 自动处理 URL 编码
                     .build()
@@ -153,7 +156,7 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
         System.out.println("开始解析C/C++项目: " + filePath);
         try {
             RestTemplate restTemplate = new RestTemplate();
-            String url = UriComponentsBuilder.fromHttpUrl("http://localhost:5000/parse/c_parse")
+            String url = UriComponentsBuilder.fromHttpUrl(flaskCrawlerUrl + "/parse/c_parse")
                     .queryParam("project_folder", filePath)
                     .encode() // 自动处理 URL 编码
                     .build()
@@ -197,6 +200,96 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
         }
     }
 
+    @Async("projectAnalysisExecutor")
+    @Override
+    public void asyncParseGoProject(String filePath){
+        parseProject(filePath, "go", "/parse/go_parse");
+    }
+
+    @Async("projectAnalysisExecutor")
+    @Override
+    public void asyncParseJavascriptProject(String filePath){
+        parseProject(filePath, "javascript", "/parse/javascript_parse");
+    }
+
+    @Async("projectAnalysisExecutor")
+    @Override
+    public void asyncParsePythonProject(String filePath){
+        parseProject(filePath, "python", "/parse/python_parse");
+    }
+
+    @Async("projectAnalysisExecutor")
+    @Override
+    public void asyncParsePhpProject(String filePath){
+        parseProject(filePath, "php", "/parse/php_parse");
+    }
+
+    @Async("projectAnalysisExecutor")
+    @Override
+    public void asyncParseRubyProject(String filePath){
+        parseProject(filePath, "ruby", "/parse/ruby_parse");
+    }
+
+    @Async("projectAnalysisExecutor")
+    @Override
+    public void asyncParseRustProject(String filePath){
+        parseProject(filePath, "rust", "/parse/rust_parse");
+    }
+
+    @Async("projectAnalysisExecutor")
+    @Override
+    public void asyncParseErlangProject(String filePath){
+        parseProject(filePath, "erlang", "/parse/erlang_parse");
+    }
+
+    // 通用解析方法
+    private void parseProject(String filePath, String language, String apiPath){
+        System.out.println("开始解析" + language + "项目: " + filePath);
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String url = UriComponentsBuilder.fromHttpUrl(flaskCrawlerUrl + apiPath)
+                    .queryParam("project_folder", filePath)
+                    .encode()
+                    .build()
+                    .toUriString();
+
+            System.out.println("调用" + language + "项目解析API: " + url);
+            String response = restTemplate.getForObject(url, String.class);
+
+            if (response == null || response.trim().isEmpty()) {
+                System.err.println(language + "项目解析API返回空响应，项目路径: " + filePath);
+                return;
+            }
+
+            if (response.contains("<!doctype html>") || response.contains("<html")) {
+                System.err.println(language + "项目解析API返回错误页面，项目路径: " + filePath);
+                System.err.println("错误详情: " + response.substring(0, Math.min(500, response.length())));
+                return;
+            }
+
+            System.out.println(language + "项目解析响应长度: " + response.length());
+            System.out.println(language + "项目解析响应内容: " + response.substring(0, Math.min(200, response.length())) + "...");
+
+            List<WhiteList> whiteLists = projectUtil.parseJsonData(response);
+            System.out.println("解析出依赖库数量: " + whiteLists.size());
+
+            int insertCount = 0;
+            for (WhiteList whiteList : whiteLists) {
+                whiteList.setFilePath(filePath);
+                whiteList.setLanguage(language);
+                whiteList.setIsdelete(0);
+                int result = whiteListMapper.insert(whiteList);
+                if (result > 0) {
+                    insertCount++;
+                }
+            }
+            System.out.println("成功插入" + language + "依赖库数量: " + insertCount);
+        } catch (Exception e) {
+            System.err.println("解析" + language + "项目失败，路径: " + filePath + "，错误: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public String uploadFile(MultipartFile file) throws IOException {
         String filePath = projectUtil.unzipAndSaveFile(file);
@@ -205,14 +298,47 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
         String projectType = projectUtil.detectProjectType(filePath);
         System.out.println("检测到项目类型: " + projectType);
 
-        if(projectType.equals("java")) {
-            System.out.println("启动Java项目解析任务");
-            applicationContext.getBean(ProjectService.class).asyncParseJavaProject(filePath);
-        } else if(projectType.equals("c")) {
-            System.out.println("启动C/C++项目解析任务");
-            applicationContext.getBean(ProjectService.class).asyncParseCProject(filePath);
-        } else {
-            System.out.println("未知项目类型，跳过解析: " + projectType);
+        ProjectService projectService = applicationContext.getBean(ProjectService.class);
+
+        switch(projectType) {
+            case "java":
+                System.out.println("启动Java项目解析任务");
+                projectService.asyncParseJavaProject(filePath);
+                break;
+            case "c":
+                System.out.println("启动C/C++项目解析任务");
+                projectService.asyncParseCProject(filePath);
+                break;
+            case "go":
+                System.out.println("启动Go项目解析任务");
+                projectService.asyncParseGoProject(filePath);
+                break;
+            case "javascript":
+                System.out.println("启动JavaScript/Node.js项目解析任务");
+                projectService.asyncParseJavascriptProject(filePath);
+                break;
+            case "python":
+                System.out.println("启动Python项目解析任务");
+                projectService.asyncParsePythonProject(filePath);
+                break;
+            case "php":
+                System.out.println("启动PHP项目解析任务");
+                projectService.asyncParsePhpProject(filePath);
+                break;
+            case "ruby":
+                System.out.println("启动Ruby项目解析任务");
+                projectService.asyncParseRubyProject(filePath);
+                break;
+            case "rust":
+                System.out.println("启动Rust项目解析任务");
+                projectService.asyncParseRustProject(filePath);
+                break;
+            case "erlang":
+                System.out.println("启动Erlang项目解析任务");
+                projectService.asyncParseErlangProject(filePath);
+                break;
+            default:
+                System.out.println("未知项目类型，跳过解析: " + projectType);
         }
 
         return filePath;
