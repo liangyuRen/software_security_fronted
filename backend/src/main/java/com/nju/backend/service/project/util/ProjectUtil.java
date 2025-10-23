@@ -225,64 +225,101 @@ public class ProjectUtil {
             throw new IllegalArgumentException("Invalid project directory");
         }
 
-        final boolean[] hasJava = {false};
-        final boolean[] hasC = {false};
-        final List<String> javaFiles = new ArrayList<>();
-        final List<String> cFiles = new ArrayList<>();
-        final List<String> allFiles = new ArrayList<>();
+        // 语言特征文件映射 - 完全按照OpenSCA官方支持的特征文件配置
+        Map<String, String> languageDetectors = new HashMap<>();
+        final Map<String, Boolean> detectedLanguages = new HashMap<>();
 
-        // 限制递归深度为3层（根目录+2级子目录）
+        // Java特征文件 (Maven/Gradle)
+        languageDetectors.put("pom.xml", "java");
+        languageDetectors.put("build.gradle", "java");
+        languageDetectors.put("build.gradle.kts", "java");
+        languageDetectors.put(".gradle", "java");
+        languageDetectors.put(".gradle.kts", "java");
+
+        // JavaScript/Node.js特征文件 (Npm)
+        languageDetectors.put("package.json", "javascript");
+        languageDetectors.put("package-lock.json", "javascript");
+        languageDetectors.put("yarn.lock", "javascript");
+
+        // Python特征文件 (Pip)
+        languageDetectors.put("pipfile", "python");
+        languageDetectors.put("pipfile.lock", "python");
+        languageDetectors.put("setup.py", "python");
+        languageDetectors.put("requirements.txt", "python");
+        languageDetectors.put("requirements.in", "python");
+
+        // PHP特征文件 (Composer)
+        languageDetectors.put("composer.json", "php");
+        languageDetectors.put("composer.lock", "php");
+
+        // Golang特征文件 (gomod)
+        languageDetectors.put("go.mod", "go");
+        languageDetectors.put("go.sum", "go");
+        languageDetectors.put("gopkg.toml", "go");
+        languageDetectors.put("gopkg.lock", "go");
+
+        // Rust特征文件 (cargo)
+        languageDetectors.put("cargo.lock", "rust");
+        languageDetectors.put("cargo.toml", "rust");
+
+        // Ruby特征文件 (gem)
+        languageDetectors.put("gemfile", "ruby");
+        languageDetectors.put("gemfile.lock", "ruby");
+
+        // Erlang特征文件 (Rebar)
+        languageDetectors.put("rebar.lock", "erlang");
+
+        // 限制递归深度为3层
         try (Stream<Path> stream = Files.walk(path, 3)) {
             stream.forEach(file -> {
-                String fileName = file.getFileName().toString();
-                String fileNameLower = fileName.toLowerCase();
-                allFiles.add(file.toString());
+                String fileName = file.getFileName().toString().toLowerCase();
 
-                // 检测Java特征
-                if (fileNameLower.equals("pom.xml")
-                        || fileNameLower.equals("build.gradle")
-                        || fileNameLower.endsWith(".java")) {
-                    hasJava[0] = true;
-                    javaFiles.add(fileName);
-                    System.out.println("DEBUG: 发现Java特征文件: " + fileName);
-                }
-
-                // 检测C特征
-                if (fileNameLower.equals("makefile")
-                        || fileNameLower.equals("cmakelists.txt")
-                        || fileNameLower.endsWith(".c")
-                        || fileNameLower.endsWith(".h")) {
-                    hasC[0] = true;
-                    cFiles.add(fileName);
-                    System.out.println("DEBUG: 发现C/C++特征文件: " + fileName);
+                // 检查是否匹配任何语言特征文件
+                if (languageDetectors.containsKey(fileName)) {
+                    String language = languageDetectors.get(fileName);
+                    detectedLanguages.put(language, true);
+                    System.out.println("DEBUG: 发现" + language + "特征文件: " + fileName);
                 }
             });
         }
 
-        System.out.println("DEBUG: 项目目录包含总文件数: " + allFiles.size());
-        System.out.println("DEBUG: Java特征文件数: " + javaFiles.size());
-        System.out.println("DEBUG: C/C++特征文件数: " + cFiles.size());
+        System.out.println("DEBUG: 检测到的语言: " + detectedLanguages.keySet());
 
-        // 显示前10个文件用于调试
-        System.out.println("DEBUG: 目录中的前10个文件:");
-        allFiles.stream().limit(10).forEach(f -> System.out.println("DEBUG: - " + f));
-
-        // 决策逻辑：Java特征优先
-        String result;
-        if (hasJava[0] && hasC[0]) {
-            result = "java"; // 同时存在时优先返回Java
-            System.out.println("DEBUG: 同时检测到Java和C特征，返回Java");
-        } else if (hasJava[0]) {
-            result = "java";
-            System.out.println("DEBUG: 检测到Java特征，返回java");
-        } else if (hasC[0]) {
-            result = "c";
-            System.out.println("DEBUG: 检测到C/C++特征，返回c");
-        } else {
-            result = "unknown";
-            System.out.println("DEBUG: 未检测到任何已知项目类型特征，返回unknown");
+        // 优先级返回 (按OpenSCA官方文档顺序排列)
+        if (detectedLanguages.getOrDefault("java", false)) {
+            System.out.println("DEBUG: 返回项目类型: java");
+            return "java";
+        }
+        if (detectedLanguages.getOrDefault("javascript", false)) {
+            System.out.println("DEBUG: 返回项目类型: javascript");
+            return "javascript";
+        }
+        if (detectedLanguages.getOrDefault("php", false)) {
+            System.out.println("DEBUG: 返回项目类型: php");
+            return "php";
+        }
+        if (detectedLanguages.getOrDefault("ruby", false)) {
+            System.out.println("DEBUG: 返回项目类型: ruby");
+            return "ruby";
+        }
+        if (detectedLanguages.getOrDefault("go", false)) {
+            System.out.println("DEBUG: 返回项目类型: go");
+            return "go";
+        }
+        if (detectedLanguages.getOrDefault("rust", false)) {
+            System.out.println("DEBUG: 返回项目类型: rust");
+            return "rust";
+        }
+        if (detectedLanguages.getOrDefault("erlang", false)) {
+            System.out.println("DEBUG: 返回项目类型: erlang");
+            return "erlang";
+        }
+        if (detectedLanguages.getOrDefault("python", false)) {
+            System.out.println("DEBUG: 返回项目类型: python");
+            return "python";
         }
 
-        return result;
+        System.out.println("DEBUG: 未检测到任何已知项目类型特征，返回unknown");
+        return "unknown";
     }
 }
