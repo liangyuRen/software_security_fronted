@@ -2,7 +2,6 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { type ProjectInfo } from './const';
 import { QuestionFilled } from "@element-plus/icons-vue";
-import LanguageSelector from "@/components/Project/LanguageSelector.vue";
 import { ElMessage, type FormInstance, type UploadInstance } from "element-plus";
 import { UploadFilled } from '@element-plus/icons-vue'
 
@@ -24,7 +23,7 @@ const newProject = reactive<ProjectInfo>(props.project ??
   name: '',
   description: '',
   risk_level: '暂无风险',
-  language: 'java',
+  language: '',  // 新API会自动检测，无需用户指定
   //依然修改companyid
   companyId: 1,
   //companyId: localStorage.getItem('companyId') ?? '',
@@ -64,22 +63,12 @@ const rules = {
   ]
 }
 
-// language change
-function handleChangeLanguage(language: string) {
-  newProject.language = language;
-}
+// 注：语言选择已移除，系统将自动检测项目语言
 
 // tooltip content
-function getTooltipContent(language: string): string {
+function getTooltipContent(): string {
   console.log("当前项目", newProject)
-  switch (language) {
-    case 'java':
-      return "上传项目压缩包，支持 zip/7z/tar/gz/rar 等格式。<br>兼容 Windows、Linux、Mac 系统压缩的文件。<br>最大可接受的文件大小：100MB。";
-    case 'cpp':
-      return "上传项目压缩包，支持 zip/7z/tar/gz/rar 等格式。<br>兼容 Windows、Linux、Mac 系统压缩的文件。<br><span style='font-weight: bold'>请在压缩包根目录放置 kulin.txt，其中包含项目所有用到的库名，一个一行。</span><br>最大可接受的文件大小：100MB。";
-    default:
-      return "上传项目压缩包，支持 zip/7z/tar/gz/rar 等格式。<br>兼容 Windows、Linux、Mac 系统压缩的文件。<br>最大可接受的文件大小：100MB。";
-  }
+  return "上传项目压缩包，支持 zip/7z/tar/gz/rar 等格式。<br>兼容 Windows、Linux、Mac 系统压缩的文件。<br><span style='font-weight: bold'>系统将自动检测项目语言，无需手动指定！</span><br>最大可接受的文件大小：100MB。";
 }
 
 // file upload
@@ -189,7 +178,21 @@ async function handleConfirmCreate(formEl: FormInstance | undefined) {
   if (!formEl) return
   await formEl.validate((valid) => {
     if (valid) {
-      emit('confirm', newProject)
+      // 对于新增项目，构建FormData用于新API上传
+      if (props.type === 'add' && currentFile.value) {
+        const formData = new FormData()
+        formData.append('name', newProject.name)
+        formData.append('description', newProject.description)
+        formData.append('riskThreshold', newProject.risk_threshold.toString())
+        formData.append('companyId', newProject.companyId.toString())
+        formData.append('file', currentFile.value)
+
+        // 返回FormData和项目信息
+        emit('confirm', { formData, projectInfo: newProject })
+      } else {
+        // 编辑项目仍使用旧流程
+        emit('confirm', newProject)
+      }
     }
   })
 }
@@ -225,17 +228,19 @@ watch(() => props.project, (project) => {
           </el-tooltip>
         </div>
       </el-form-item>
-      <el-form-item label="项目语言" v-if="type == 'add'">
-        <LanguageSelector @select="handleChangeLanguage" />
-      </el-form-item>
+      <!-- 语言选择已移除，系统将自动检测 -->
       <el-form-item label="项目文件" prop="filePath" v-if="type == 'add'">
         <div class="upload-file-container">
           <el-upload ref="uploader" :auto-upload="false" :on-change="handleFileChange" :show-file-list="false"
+<<<<<<< HEAD
             :multiple="false" :action="fileUploadServerBaseURL + '/project/uploadFile'"
+=======
+            :multiple="false" :action="fileUploadServerBaseURL + '/project/uploadProject'"
+>>>>>>> 25bf365 (feat: 实现统一项目上传和自动分析系统)
             :on-success="handleFileUploadSuccess" :on-error="handleFileUploadError">
             <el-button type="primary">选择文件</el-button>
             <div class="tips">
-              <el-tooltip :content="getTooltipContent(newProject.language)" raw-content placement="top">
+              <el-tooltip :content="getTooltipContent()" raw-content placement="top">
                 <el-icon class="question-icon">
                   <QuestionFilled />
                 </el-icon>
@@ -254,7 +259,11 @@ watch(() => props.project, (project) => {
       <el-form-item label="项目文件" prop="editFilePath" v-if="type == 'file'">
         <div class="upload-file-drag-container">
           <el-upload ref="uploader" :auto-upload="false" :on-change="handleFileChange" :show-file-list="false"
+<<<<<<< HEAD
             :multiple="false" :action="fileUploadServerBaseURL + '/project/uploadFile'"
+=======
+            :multiple="false" :action="fileUploadServerBaseURL + '/project/uploadProject'"
+>>>>>>> 25bf365 (feat: 实现统一项目上传和自动分析系统)
             :on-success="handleFileUploadSuccess" drag style="width: 100%" :on-error="handleFileUploadError">
             <el-icon class="el-icon--upload">
               <upload-filled />
@@ -266,7 +275,11 @@ watch(() => props.project, (project) => {
               <div class="el-upload__tip"
                 style="display: flex; justify-content: flex-start; align-items: center; gap: 10px">
                 支持扩展名：zip, 7z, tar, gz, rar（兼容各操作系统）
+<<<<<<< HEAD
                 <el-tooltip :content="getTooltipContent(newProject.language)" raw-content placement="top">
+=======
+                <el-tooltip :content="getTooltipContent()" raw-content placement="top">
+>>>>>>> 25bf365 (feat: 实现统一项目上传和自动分析系统)
                   <el-icon class="question-icon">
                     <QuestionFilled />
                   </el-icon>

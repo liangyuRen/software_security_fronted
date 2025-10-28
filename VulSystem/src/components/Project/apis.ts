@@ -130,3 +130,66 @@ export const getVulProjectList = async () => {
   }))
   return transformedProjects
 }
+
+/**
+ * 统一上传和分析项目（新API）
+ * 一步完成文件上传、项目创建和自动分析
+ */
+export interface UploadAndAnalyzeResponse {
+  code: number
+  message: string
+  obj: {
+    projectId: number
+    status: string
+    message?: string
+  }
+}
+
+export const uploadAndAnalyzeProject = (formData: FormData): Promise<UploadAndAnalyzeResponse> => {
+  return new Promise((resolve, reject) => {
+    instance
+      .post(`/project/uploadProject`, formData)
+      .then((res: AxiosResponse<UploadAndAnalyzeResponse>) => {
+        resolve(res.data)
+      })
+      .catch((err: AxiosError) => {
+        console.error(err)
+        reject(err)
+      })
+  })
+}
+
+/**
+ * 获取项目分析状态
+ * 前端轮询调用此API获取实时进度
+ */
+export interface ProjectAnalysisStatus {
+  projectId: number
+  language: string
+  componentCount: number
+  vulnerabilityCount: number
+  riskLevel: string
+  status: 'pending' | 'analyzing' | 'completed' | 'failed'
+  message?: string
+  lastAnalysisTime: number
+}
+
+export interface AnalysisStatusResponse {
+  code: number
+  message: string
+  obj: ProjectAnalysisStatus
+}
+
+export const getProjectAnalysisStatus = (projectId: number): Promise<AnalysisStatusResponse> => {
+  return new Promise((resolve, reject) => {
+    instance
+      .get(`/project/analysisStatus?projectId=${projectId}`)
+      .then((res: AxiosResponse<AnalysisStatusResponse>) => {
+        resolve(res.data)
+      })
+      .catch((err: AxiosError) => {
+        console.error(err)
+        reject(err)
+      })
+  })
+}

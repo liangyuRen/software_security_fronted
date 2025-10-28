@@ -147,7 +147,11 @@ import {
   createProject, deleteProject,
   getProjectList,
   type ProjectCreateResponse,
-  type ProjectListResponse, updateProject
+  type ProjectListResponse, updateProject,
+  uploadAndAnalyzeProject,
+  getProjectAnalysisStatus,
+  type UploadAndAnalyzeResponse,
+  type AnalysisStatusResponse
 } from "@/components/Project/apis.ts";
 import LoadingFrames from "@/components/LoadingFrames.vue";
 import { getCompanyStatic, type StatisticsInfo } from '@/components/Statistic/const';
@@ -253,33 +257,122 @@ const option = ref({
 
 // project modification
 const addFormVisible = ref(false)
-const handleAddProject = (newProject: ProjectInfo) => {
-  console.log(newProject);
 
-  createProject(newProject).then((res: ProjectCreateResponse) => {
-    console.log(res);
+/**
+ * 处理新项目添加
+ * 使用新的统一上传API（uploadAndAnalyzeProject）
+ * 上传后启动异步分析，并轮询查询进度
+ */
+const handleAddProject = (formDataWrapper: any) => {
+  // 从表单组件接收FormData
+  const formData = formDataWrapper.formData || formDataWrapper;
+  const projectInfo = formDataWrapper.projectInfo || formDataWrapper;
+
+  console.log('上传项目信息：', projectInfo);
+
+  // 调用新的统一上传API
+  uploadAndAnalyzeProject(formData).then((res: UploadAndAnalyzeResponse) => {
+    console.log('上传响应：', res);
     if (res.code === 200) {
-      ElMessage({
-        message: '成功添加',
-        type: 'success',
-      })
-      // 重新加载项目列表，而不是刷新整个页面
-      const companyId = 1;
-      getProjects(companyId);
+      const projectId = res.obj.projectId;
+      ElMessage.success('项目上传成功，正在自动分析...');
+
+      // 启动轮询获取分析进度
+      monitorProjectAnalysis(projectId);
+
+      // 较早关闭对话框
+      addFormVisible.value = false;
     } else {
-      ElMessage({
-        message: '添加失败: ' + res.message + ' ' + res.obj,
-        type: 'error',
-      })
+      ElMessage.error('项目上传失败: ' + res.message);
+      addFormVisible.value = false;
     }
+  }).catch((err) => {
+    console.error('上传失败：', err);
+    ElMessage.error('项目上传失败，请检查网络或文件格式');
+    addFormVisible.value = false;
   });
-  addFormVisible.value = false;
+}
+
+/**
+ * 监控项目分析进度
+ * 每2秒轮询一次，直到分析完成或失败
+ */
+function monitorProjectAnalysis(projectId: number) {
+  let pollCount = 0;
+  const maxPolls = 90; // 最多轮询90次（90 * 2秒 = 180秒 = 3分钟）
+  const pollInterval = 2000; // 2秒轮询一次
+
+  const intervalId = setInterval(async () => {
+    if (pollCount >= maxPolls) {
+      clearInterval(intervalId);
+      ElMessage.warning('分析超时，请稍后在项目详情页查看');
+      return;
+    }
+
+    try {
+      const response: AnalysisStatusResponse = await getProjectAnalysisStatus(projectId);
+
+      if (response.code === 200) {
+        const status = response.obj;
+
+        console.log(`[分析进度] 项目${projectId}: ${status.status}，语言: ${status.language}`);
+
+        // 分析完成
+        if (status.status === 'completed') {
+          clearInterval(intervalId);
+          ElMessage.success({
+            message: `✅ 分析完成\n检测语言：${status.language}\n` +
+                    `组件数：${status.componentCount}\n` +
+                    `漏洞数：${status.vulnerabilityCount}\n` +
+                    `风险等级：${status.riskLevel}`,
+            duration: 5000
+          });
+
+          // 刷新项目列表展示最新数据
+          const companyId = 1;
+          getProjects(companyId);
+          return;
+        }
+
+        // 分析失败
+        if (status.status === 'failed') {
+          clearInterval(intervalId);
+          ElMessage.error(`❌ 分析失败：${status.message || '未知原因'}`);
+
+          // 仍然刷新列表，显示失败状态的项目
+          const companyId = 1;
+          getProjects(companyId);
+          return;
+        }
+
+        // 分析中 - 仅输出日志，不弹出提示
+        if (status.status === 'analyzing') {
+          console.log(`[进度] 项目${projectId}分析中...`);
+        }
+      }
+    } catch (err) {
+      console.error('查询分析状态失败：', err);
+      // 继续轮询，不中断
+    }
+
+    pollCount++;
+  }, pollInterval);
 }
 
 const handleEditProject = (project: ProjectInfo) => {
   console.log(project);
 
-  updateProject(project).then((res: ProjectCreateResponse) => {
+  // Build FormData from ProjectInfo
+  const formData = new FormData()
+  formData.append('id', project.id.toString())
+  formData.append('name', project.name)
+  formData.append('description', project.description)
+  formData.append('riskThreshold', project.risk_threshold.toString())
+  if (project.filePath) {
+    formData.append('filePath', project.filePath)
+  }
+
+  updateProject(formData).then((res: ProjectCreateResponse) => {
     console.log(res);
     if (res.code === 200) {
       ElMessage({
@@ -309,7 +402,11 @@ const handleDeleteProject = (project: ProjectInfo) => {
     .then(() => {
       console.log(project);
 
-      deleteProject(project).then((res: ProjectCreateResponse) => {
+      // Build FormData from ProjectInfo
+      const formData = new FormData()
+      formData.append('id', project.id.toString())
+
+      deleteProject(formData).then((res: ProjectCreateResponse) => {
         console.log(res);
         if (res.code === 200) {
           ElMessage({
@@ -404,9 +501,20 @@ async function getProjects(companyId: number, page?: number) {
         console.error(data);
         return;
       }
-      projectInfos.value = data.obj;
-      totalProjects.value = data.obj.length;
-      filteredProjects.value = data.obj;
+      // Convert Obj[] to ProjectInfo[]
+      const transformedProjects: ProjectInfo[] = data.obj.map((obj) => ({
+        id: obj.id,
+        description: obj.description || '',
+        name: obj.name || '',
+        risk_level: obj.risk_level || '暂无风险',
+        risk_threshold: obj.risk_threshold ? parseInt(obj.risk_threshold, 10) : 0,
+        language: 'java', // default value
+        companyId: companyId,
+        filePath: null,
+      }));
+      projectInfos.value = transformedProjects;
+      totalProjects.value = transformedProjects.length;
+      filteredProjects.value = transformedProjects;
     }).catch((err) => {
       console.log(err);
       ElMessage.error('获取项目列表失败');
