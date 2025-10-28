@@ -75,6 +75,44 @@ public class Project implements Serializable {
     @TableField("isdelete")
     private Integer isDelete;
 
+    /**
+     * 项目分析状态
+     * pending(待分析)/analyzing(分析中)/completed(已完成)/failed(分析失败)
+     */
+    @TableField("analysis_status")
+    private String analysisStatus;
+
+    /**
+     * 分析结果消息或错误描述
+     */
+    @TableField("analysis_message")
+    private String analysisMessage;
+
+    /**
+     * 检测到的组件数量
+     */
+    @TableField("component_count")
+    private Integer componentCount;
+
+    /**
+     * 检测到的漏洞数量
+     */
+    @TableField("vulnerability_count")
+    private Integer vulnerabilityCount;
+
+    /**
+     * 风险等级
+     * 暂无风险/低风险/高风险
+     */
+    @TableField("risk_level")
+    private String riskLevel;
+
+    /**
+     * 最后分析时间(时间戳)
+     */
+    @TableField("last_analysis_time")
+    private Long lastAnalysisTime;
+
     public ProjectVO toVO() {
         ProjectVO projectVO = new ProjectVO();
         projectVO.setId(this.id);

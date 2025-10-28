@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nju.backend.config.vo.ProjectAnalysisResult;
 import com.nju.backend.config.vo.ProjectVO;
 import com.nju.backend.config.vo.VulnerabilityVO;
 import com.nju.backend.repository.mapper.*;
@@ -66,6 +67,371 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
 
     @Autowired
     private WhiteListMapper whiteListMapper;
+
+    @Autowired
+    private VulnerabilityReportMapper vulnerabilityReportMapper;
+
+    @Override
+    @Transactional
+    public Object uploadAndAnalyzeProject(String name, String description, int riskThreshold, int companyId, MultipartFile file) throws IOException {
+        System.out.println("======== 开始统一上传和分析项目 ========");
+        System.out.println("项目名称: " + name);
+        System.out.println("公司ID: " + companyId);
+
+        // 验证公司存在
+        Company company = companyMapper.selectById(companyId);
+        if (company == null) {
+            throw new RuntimeException("Company does not exist.");
+        }
+
+        // 解压文件
+        String filePath = projectUtil.unzipAndSaveFile(file);
+        System.out.println("文件解压完成，路径: " + filePath);
+
+        // 创建项目记录，初始状态为 "pending"
+        Project project = new Project();
+        project.setName(name);
+        project.setDescription(description);
+        project.setRiskThreshold(riskThreshold);
+        project.setIsDelete(0);
+        project.setRoadmapFile("");
+        project.setCreateTime(new Date());
+        project.setFile(filePath);
+        project.setLanguage("detecting");  // 初始状态：检测中
+        project.setAnalysisStatus("pending");  // 分析状态：待分析
+        project.setComponentCount(0);
+        project.setVulnerabilityCount(0);
+        project.setLastAnalysisTime(System.currentTimeMillis());
+
+        projectMapper.insert(project);
+        System.out.println("项目记录已创建，ID: " + project.getId());
+
+        // 更新公司的项目列表
+        if (company.getProjectId() == null || company.getProjectId().isEmpty()) {
+            company.setProjectId("{}");
+        }
+        String companyProjectId = company.getProjectId();
+        companyProjectId = companyProjectId.substring(0, companyProjectId.length() - 1) +
+                          ",\"" + project.getId() + "\":\"" + "detecting" + "\"}";
+        company.setProjectId(companyProjectId);
+        companyMapper.updateById(company);
+
+        // 启动异步分析任务
+        ProjectService projectService = applicationContext.getBean(ProjectService.class);
+        projectService.asyncAnalyzeProject(project.getId(), filePath);
+
+        // 返回项目ID和初始状态
+        Map<String, Object> response = new HashMap<>();
+        response.put("projectId", project.getId());
+        response.put("status", "pending");
+        response.put("message", "Project uploaded, analysis started...");
+        return response;
+    }
+
+    /**
+     * 异步分析项目的核心方法
+     * 完整的分析流程：
+     * 1. 检测项目语言
+     * 2. 调用对应的Flask API解析依赖
+     * 3. 保存组件到数据库
+     * 4. 匹配组件与漏洞
+     * 5. 计算风险级别
+     * 6. 更新项目状态
+     */
+    @Async("projectAnalysisExecutor")
+    public void asyncAnalyzeProject(Integer projectId, String filePath) {
+        System.out.println("======== 开始异步分析项目 " + projectId + " ========");
+        Project project = projectMapper.selectById(projectId);
+
+        if (project == null) {
+            System.err.println("项目不存在: " + projectId);
+            return;
+        }
+
+        try {
+            // 更新状态为"分析中"
+            updateProjectStatus(projectId, "analyzing", null);
+
+            // 步骤1: 检测项目语言
+            System.out.println("步骤1: 检测项目语言...");
+            String language = projectUtil.detectProjectType(filePath);
+            System.out.println("检测到项目语言: " + language);
+
+            if ("unknown".equals(language)) {
+                updateProjectStatus(projectId, "failed", "Unable to detect project language");
+                return;
+            }
+
+            // 更新项目语言
+            project.setLanguage(language);
+            projectMapper.updateById(project);
+
+            // 步骤2: 调用Flask API解析依赖
+            System.out.println("步骤2: 调用Flask API解析依赖...");
+            List<WhiteList> components = callFlaskParseAPI(filePath, language);
+            System.out.println("解析出组件数: " + components.size());
+
+            // 步骤3: 保存组件到数据库
+            System.out.println("步骤3: 保存组件到数据库...");
+            int savedCount = saveComponentsToDB(projectId, filePath, language, components);
+            System.out.println("成功保存组件数: " + savedCount);
+
+            // 步骤4: 匹配组件与漏洞
+            System.out.println("步骤4: 匹配组件与漏洞...");
+            int vulnerabilityCount = matchComponentWithVulnerabilities(projectId, components);
+            System.out.println("匹配到的漏洞数: " + vulnerabilityCount);
+
+            // 步骤5: 计算风险级别
+            System.out.println("步骤5: 计算风险级别...");
+            String riskLevel = analyzeVulnerabilities(projectId, project.getRiskThreshold());
+            System.out.println("项目风险级别: " + riskLevel);
+
+            // 步骤6: 更新项目状态为"已完成"
+            project.setComponentCount(savedCount);
+            project.setVulnerabilityCount(vulnerabilityCount);
+            project.setRiskLevel(riskLevel);
+            project.setLastAnalysisTime(System.currentTimeMillis());
+            updateProjectStatus(projectId, "completed", "Analysis completed successfully");
+
+        } catch (Exception e) {
+            System.err.println("异步分析项目失败: " + e.getMessage());
+            e.printStackTrace();
+            updateProjectStatus(projectId, "failed", "Analysis failed: " + e.getMessage());
+        }
+
+        System.out.println("======== 异步分析项目 " + projectId + " 完成 ========");
+    }
+
+    /**
+     * 调用Flask Parse API获取项目依赖
+     */
+    private List<WhiteList> callFlaskParseAPI(String filePath, String language) {
+        System.out.println("调用Flask API: 语言=" + language + ", 路径=" + filePath);
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String apiPath;
+
+            // 根据语言选择对应的API端点
+            switch (language) {
+                case "java":
+                    apiPath = "/parse/pom_parse";
+                    break;
+                case "javascript":
+                    apiPath = "/parse/javascript_parse";
+                    break;
+                case "python":
+                    apiPath = "/parse/python_parse";
+                    break;
+                case "php":
+                    apiPath = "/parse/php_parse";
+                    break;
+                case "go":
+                    apiPath = "/parse/go_parse";
+                    break;
+                case "rust":
+                    apiPath = "/parse/rust_parse";
+                    break;
+                case "ruby":
+                    apiPath = "/parse/ruby_parse";
+                    break;
+                case "erlang":
+                    apiPath = "/parse/erlang_parse";
+                    break;
+                case "c":
+                case "c++":
+                    apiPath = "/parse/c_parse";
+                    break;
+                default:
+                    System.err.println("不支持的语言: " + language);
+                    return new ArrayList<>();
+            }
+
+            String url = UriComponentsBuilder.fromHttpUrl(flaskCrawlerUrl + apiPath)
+                    .queryParam("project_folder", filePath)
+                    .encode()
+                    .build()
+                    .toUriString();
+
+            System.out.println("请求URL: " + url);
+            String response = restTemplate.getForObject(url, String.class);
+
+            if (response == null || response.trim().isEmpty()) {
+                System.err.println("Flask API返回空响应");
+                return new ArrayList<>();
+            }
+
+            if (response.contains("<!doctype html>") || response.contains("<html")) {
+                System.err.println("Flask API返回错误页面");
+                return new ArrayList<>();
+            }
+
+            List<WhiteList> components = projectUtil.parseJsonData(response);
+            System.out.println("解析到 " + components.size() + " 个组件");
+            return components;
+
+        } catch (Exception e) {
+            System.err.println("调用Flask API失败: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 保存组件到数据库
+     */
+    private int saveComponentsToDB(Integer projectId, String filePath, String language, List<WhiteList> components) {
+        int insertCount = 0;
+
+        for (WhiteList component : components) {
+            try {
+                component.setFilePath(filePath);
+                component.setLanguage(language);
+                component.setIsdelete(0);
+                int result = whiteListMapper.insert(component);
+                if (result > 0) {
+                    insertCount++;
+                }
+            } catch (Exception e) {
+                System.err.println("保存组件失败: " + component.getName() + ", 错误: " + e.getMessage());
+            }
+        }
+
+        System.out.println("成功保存 " + insertCount + " 个组件到数据库");
+        return insertCount;
+    }
+
+    /**
+     * 匹配组件与漏洞
+     * 根据组件名称和语言在漏洞库中查找相关漏洞
+     */
+    private int matchComponentWithVulnerabilities(Integer projectId, List<WhiteList> components) {
+        int vulnerabilityCount = 0;
+
+        try {
+            for (WhiteList component : components) {
+                // 根据组件名和语言查询漏洞
+                QueryWrapper<VulnerabilityReport> queryWrapper = new QueryWrapper<>();
+                queryWrapper.like("description", component.getName())
+                           .eq("language", component.getLanguage())
+                           .eq("isdelete", 0);
+
+                List<VulnerabilityReport> vulnerabilities = vulnerabilityReportMapper.selectList(queryWrapper);
+
+                System.out.println("组件 " + component.getName() + " 匹配到 " + vulnerabilities.size() + " 个漏洞");
+
+                // 为每个漏洞创建项目-漏洞关联
+                for (VulnerabilityReport vulnReport : vulnerabilities) {
+                    try {
+                        // 先检查是否已存在项目-漏洞关联
+                        QueryWrapper<ProjectVulnerability> pvWrapper = new QueryWrapper<>();
+                        pvWrapper.eq("project_id", projectId)
+                                .eq("vulnerability_id", vulnReport.getId());
+
+                        List<ProjectVulnerability> existing = projectVulnerabilityMapper.selectList(pvWrapper);
+
+                        if (existing.isEmpty()) {
+                            // 创建关联
+                            ProjectVulnerability pv = new ProjectVulnerability();
+                            pv.setProjectId(projectId);
+                            pv.setVulnerabilityId(vulnReport.getId());
+                            pv.setIsDelete(0);
+                            projectVulnerabilityMapper.insert(pv);
+                            vulnerabilityCount++;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("创建项目-漏洞关联失败: " + e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("匹配漏洞失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        System.out.println("共关联 " + vulnerabilityCount + " 个漏洞");
+        return vulnerabilityCount;
+    }
+
+    /**
+     * 分析项目的漏洞并计算风险等级
+     * 风险等级: 暂无风险/低风险/高风险
+     */
+    private String analyzeVulnerabilities(Integer projectId, Integer riskThreshold) {
+        try {
+            // 获取项目的所有漏洞
+            QueryWrapper<ProjectVulnerability> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("project_id", projectId).eq("isDelete", 0);
+            List<ProjectVulnerability> projectVulnerabilities = projectVulnerabilityMapper.selectList(queryWrapper);
+
+            if (projectVulnerabilities.isEmpty()) {
+                return "暂无风险";
+            }
+
+            // 统计高风险漏洞数量
+            int highRiskCount = 0;
+            for (ProjectVulnerability pv : projectVulnerabilities) {
+                VulnerabilityReport vulnReport = vulnerabilityReportMapper.selectById(pv.getVulnerabilityId());
+                if (vulnReport != null && "High".equalsIgnoreCase(vulnReport.getRiskLevel())) {
+                    highRiskCount++;
+                }
+            }
+
+            System.out.println("项目 " + projectId + " 的高风险漏洞数: " + highRiskCount + ", 阈值: " + riskThreshold);
+
+            if (highRiskCount >= riskThreshold) {
+                return "高风险";
+            } else if (projectVulnerabilities.size() > 0) {
+                return "低风险";
+            } else {
+                return "暂无风险";
+            }
+
+        } catch (Exception e) {
+            System.err.println("分析漏洞失败: " + e.getMessage());
+            e.printStackTrace();
+            return "未知";
+        }
+    }
+
+    /**
+     * 更新项目的分析状态
+     */
+    @Transactional
+    private void updateProjectStatus(Integer projectId, String status, String message) {
+        try {
+            Project project = projectMapper.selectById(projectId);
+            if (project != null) {
+                project.setAnalysisStatus(status);
+                project.setAnalysisMessage(message);
+                project.setLastAnalysisTime(System.currentTimeMillis());
+                projectMapper.updateById(project);
+                System.out.println("项目 " + projectId + " 状态已更新为: " + status);
+            }
+        } catch (Exception e) {
+            System.err.println("更新项目状态失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public ProjectAnalysisResult getProjectAnalysisStatus(int projectId) {
+        Project project = projectMapper.selectById(projectId);
+        if (project == null) {
+            throw new RuntimeException("Project not found");
+        }
+
+        ProjectAnalysisResult result = new ProjectAnalysisResult();
+        result.setProjectId(projectId);
+        result.setLanguage(project.getLanguage());
+        result.setComponentCount(project.getComponentCount() != null ? project.getComponentCount() : 0);
+        result.setVulnerabilityCount(project.getVulnerabilityCount() != null ? project.getVulnerabilityCount() : 0);
+        result.setRiskLevel(project.getRiskLevel());
+        result.setStatus(project.getAnalysisStatus() != null ? project.getAnalysisStatus() : "pending");
+        result.setMessage(project.getAnalysisMessage());
+        result.setLastAnalysisTime(project.getLastAnalysisTime());
+
+        return result;
+    }
 
     @Override
     @Transactional

@@ -1,6 +1,7 @@
 package com.nju.backend.service.project;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.nju.backend.config.vo.ProjectAnalysisResult;
 import com.nju.backend.config.vo.ProjectVO;
 import com.nju.backend.config.vo.VulnerabilityVO;
 import org.springframework.scheduling.annotation.Async;
@@ -47,6 +48,25 @@ public interface ProjectService {
     void asyncParseErlangProject(String filePath);
 
     String uploadFile(MultipartFile file) throws IOException;
+
+    /**
+     * 统一上传项目文件并自动分析
+     * 将文件解压，创建项目记录，启动异步分析任务
+     */
+    Object uploadAndAnalyzeProject(String name, String description, int riskThreshold, int companyId, MultipartFile file) throws IOException;
+
+    /**
+     * 异步分析项目
+     * 核心分析流程：检测语言、调用Flask API、保存组件、匹配漏洞、计算风险
+     */
+    @Async("projectAnalysisExecutor")
+    void asyncAnalyzeProject(Integer projectId, String filePath);
+
+    /**
+     * 获取项目分析状态
+     * 返回分析进度和结果信息
+     */
+    ProjectAnalysisResult getProjectAnalysisStatus(int projectId);
 
     List<VulnerabilityVO> getVulnerabilities(int id);
 

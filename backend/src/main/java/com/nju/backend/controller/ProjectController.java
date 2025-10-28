@@ -2,6 +2,7 @@ package com.nju.backend.controller;
 
 import com.nju.backend.config.RespBean;
 import com.nju.backend.config.RespBeanEnum;
+import com.nju.backend.config.vo.ProjectAnalysisResult;
 import com.nju.backend.service.project.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.PathResource;
@@ -44,6 +45,39 @@ public class ProjectController {
     public RespBean uploadFile(@RequestParam("file") MultipartFile file) {
         try {
             return RespBean.success(projectService.uploadFile(file));
+        } catch (Exception e) {
+            return RespBean.error(RespBeanEnum.ERROR, e.getMessage());
+        }
+    }
+
+    /**
+     * 统一上传项目文件并自动分析
+     * 替代原来的 uploadFile + create 两步流程
+     * 自动检测项目语言，扫描组件，存储到数据库
+     */
+    @PostMapping("/uploadProject")
+    public RespBean uploadProject(
+            @RequestParam("name") String name,
+            @RequestParam("description") String description,
+            @RequestParam("riskThreshold") int riskThreshold,
+            @RequestParam("companyId") int companyId,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            return RespBean.success(projectService.uploadAndAnalyzeProject(
+                    name, description, riskThreshold, companyId, file));
+        } catch (Exception e) {
+            return RespBean.error(RespBeanEnum.ERROR, e.getMessage());
+        }
+    }
+
+    /**
+     * 获取项目分析状态
+     * 用于前端轮询查询分析进度
+     */
+    @GetMapping("/analysisStatus")
+    public RespBean getAnalysisStatus(@RequestParam("projectId") int projectId) {
+        try {
+            return RespBean.success(projectService.getProjectAnalysisStatus(projectId));
         } catch (Exception e) {
             return RespBean.error(RespBeanEnum.ERROR, e.getMessage());
         }
