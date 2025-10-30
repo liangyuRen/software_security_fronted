@@ -204,11 +204,32 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
 
     /**
      * 调用Flask Parse API获取项目依赖
+     * 对于Odoo项目，直接解析__manifest__.py文件的"depends"字段
+     * 对于其他语言，调用对应的Flask API
      */
     private List<WhiteList> callFlaskParseAPI(String filePath, String language) {
         System.out.println("调用Flask API: 语言=" + language + ", 路径=" + filePath);
 
         try {
+            // 特殊处理Odoo项目 - 直接解析__manifest__.py文件
+            if ("odoo".equals(language)) {
+                System.out.println("检测到Odoo项目，直接解析__manifest__.py文件");
+                List<String> odooModules = projectUtil.extractOdooDependencies(filePath);
+
+                // 将Odoo模块名称转换为WhiteList对象
+                List<WhiteList> components = new ArrayList<>();
+                for (String moduleName : odooModules) {
+                    WhiteList component = new WhiteList();
+                    component.setName(moduleName);
+                    component.setDescription("Odoo module dependency");
+                    components.add(component);
+                }
+
+                System.out.println("提取到 " + components.size() + " 个Odoo模块");
+                return components;
+            }
+
+            // 对于非Odoo项目，调用Flask API
             RestTemplate restTemplate = new RestTemplate();
             String apiPath;
 
@@ -285,20 +306,64 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
 
         for (WhiteList component : components) {
             try {
+                // 设置新增字段
+                component.setProjectId(projectId);  // 关联项目
                 component.setFilePath(filePath);
                 component.setLanguage(language);
+                component.setCreatedTime(System.currentTimeMillis());  // 设置创建时间
+
+                // 如果没有版本号，设置为 "unknown"
+                if (component.getVersion() == null || component.getVersion().isEmpty()) {
+                    component.setVersion("unknown");
+                }
+
+                // 如果没有包管理器信息，根据语言推断
+                if (component.getPackageManager() == null || component.getPackageManager().isEmpty()) {
+                    component.setPackageManager(inferPackageManager(language));
+                }
+
                 component.setIsdelete(0);
+
                 int result = whiteListMapper.insert(component);
                 if (result > 0) {
                     insertCount++;
+                    System.out.println("✓ 保存组件: " + component.getName() + " v" + component.getVersion());
                 }
             } catch (Exception e) {
                 System.err.println("保存组件失败: " + component.getName() + ", 错误: " + e.getMessage());
             }
         }
 
-        System.out.println("成功保存 " + insertCount + " 个组件到数据库");
+        System.out.println("成功保存 " + insertCount + " 个组件到数据库 (project_id: " + projectId + ")");
         return insertCount;
+    }
+
+    /**
+     * 根据编程语言推断包管理器
+     */
+    private String inferPackageManager(String language) {
+        switch (language.toLowerCase()) {
+            case "java":
+                return "maven";
+            case "javascript":
+                return "npm";
+            case "python":
+                return "pip";
+            case "php":
+                return "composer";
+            case "go":
+                return "gomod";
+            case "rust":
+                return "cargo";
+            case "ruby":
+                return "bundler";
+            case "erlang":
+                return "rebar";
+            case "odoo":
+                return "odoo_module";
+            default:
+                return language;
+        }
     }
 
     /**

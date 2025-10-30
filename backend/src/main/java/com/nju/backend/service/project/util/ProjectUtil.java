@@ -216,6 +216,61 @@ public class ProjectUtil {
         }
     }
 
+    /**
+     * 提取 Odoo 模块的依赖关系
+     * 从 __manifest__.py 文件的 "depends" 字段提取依赖的模块列表
+     *
+     * @param projectPath 项目路径
+     * @return 组件列表（Odoo 模块依赖）
+     */
+    public List<String> extractOdooDependencies(String projectPath) {
+        Set<String> dependencies = new LinkedHashSet<>();
+        Path path = Paths.get(projectPath);
+        System.out.println("DEBUG: 提取 Odoo 依赖，路径: " + projectPath);
+
+        try (Stream<Path> stream = Files.walk(path, 3)) {
+            stream.filter(file -> file.getFileName().toString().equals("__manifest__.py"))
+                    .forEach(manifestFile -> {
+                        try {
+                            String content = new String(Files.readAllBytes(manifestFile));
+                            System.out.println("DEBUG: 解析 Odoo 清单文件: " + manifestFile);
+
+                            // 使用正则提取 "depends" 字段的内容
+                            // 支持格式: "depends": [...] 或 depends = [...]
+                            String pattern = "[\"']?depends[\"']?\\s*[=:]\\s*\\[(.*?)\\]";
+                            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern, java.util.regex.Pattern.DOTALL);
+                            java.util.regex.Matcher m = p.matcher(content);
+
+                            if (m.find()) {
+                                String dependsContent = m.group(1);
+                                System.out.println("DEBUG: 找到 depends 字段: " + dependsContent);
+
+                                // 提取模块名（去掉引号和空白）
+                                String[] modules = dependsContent.split(",");
+                                for (String module : modules) {
+                                    module = module.trim()
+                                            .replaceAll("^[\"']", "")  // 去掉开始引号
+                                            .replaceAll("[\"']$", "")  // 去掉结束引号
+                                            .trim();
+
+                                    if (!module.isEmpty() && !module.startsWith("#")) {
+                                        dependencies.add(module);
+                                        System.out.println("DEBUG: 提取 Odoo 依赖模块: " + module);
+                                    }
+                                }
+                            }
+                        } catch (IOException e) {
+                            System.err.println("DEBUG: 读取清单文件失败: " + e.getMessage());
+                        }
+                    });
+        } catch (IOException e) {
+            System.err.println("DEBUG: 扫描 Odoo 依赖失败: " + e.getMessage());
+        }
+
+        System.out.println("DEBUG: 提取到的 Odoo 依赖数: " + dependencies.size());
+        return new ArrayList<>(dependencies);
+    }
+
     public String detectProjectType(String projectPath) throws IOException {
         Path path = Paths.get(projectPath);
         System.out.println("DEBUG: 检测项目类型，路径: " + projectPath);
@@ -228,6 +283,9 @@ public class ProjectUtil {
         // 语言特征文件映射 - 完全按照OpenSCA官方支持的特征文件配置
         Map<String, String> languageDetectors = new HashMap<>();
         final Map<String, Boolean> detectedLanguages = new HashMap<>();
+
+        // Odoo特征文件 (高优先级) - __manifest__.py 是 Odoo 模块的标识
+        languageDetectors.put("__manifest__.py", "odoo");
 
         // Java特征文件 (Maven/Gradle)
         languageDetectors.put("pom.xml", "java");
@@ -285,7 +343,11 @@ public class ProjectUtil {
 
         System.out.println("DEBUG: 检测到的语言: " + detectedLanguages.keySet());
 
-        // 优先级返回 (按OpenSCA官方文档顺序排列)
+        // 优先级返回 - Odoo最高优先级，因为它是特定的企业应用框架
+        if (detectedLanguages.getOrDefault("odoo", false)) {
+            System.out.println("DEBUG: 返回项目类型: odoo (Python-based Odoo application)");
+            return "odoo";
+        }
         if (detectedLanguages.getOrDefault("java", false)) {
             System.out.println("DEBUG: 返回项目类型: java");
             return "java";
