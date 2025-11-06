@@ -1,0 +1,12 @@
+{
+  "task_info": {
+    "tool_version": "v3.0.8",
+    "app_name": "opensca",
+    "size": 0,
+    "start_time": "2025-10-10 19:12:32",
+    "end_time": "2025-10-10 19:12:32",
+    "cost_time": 0.000253154,
+    "error": "stat : no such file or directory\nnot config vuln database origin"
+  },
+  "id": "57674784856965120"
+}

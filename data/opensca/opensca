@@ -1,0 +1,5 @@
+#!/bin/bash
+echo "OpenSCA tool placeholder - download manually from:"
+echo "https://opensca.xmirror.cn/release/opensca-cli/"
+echo "Or GitHub: https://github.com/XmirrorSecurity/OpenSCA-cli/releases"
+exit 1
