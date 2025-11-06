@@ -232,11 +232,7 @@ watch(() => props.project, (project) => {
       <el-form-item label="项目文件" prop="filePath" v-if="type == 'add'">
         <div class="upload-file-container">
           <el-upload ref="uploader" :auto-upload="false" :on-change="handleFileChange" :show-file-list="false"
-<<<<<<< HEAD
-            :multiple="false" :action="fileUploadServerBaseURL + '/project/uploadFile'"
-=======
             :multiple="false" :action="fileUploadServerBaseURL + '/project/uploadProject'"
->>>>>>> 25bf365 (feat: 实现统一项目上传和自动分析系统)
             :on-success="handleFileUploadSuccess" :on-error="handleFileUploadError">
             <el-button type="primary">选择文件</el-button>
             <div class="tips">
@@ -259,11 +255,7 @@ watch(() => props.project, (project) => {
       <el-form-item label="项目文件" prop="editFilePath" v-if="type == 'file'">
         <div class="upload-file-drag-container">
           <el-upload ref="uploader" :auto-upload="false" :on-change="handleFileChange" :show-file-list="false"
-<<<<<<< HEAD
-            :multiple="false" :action="fileUploadServerBaseURL + '/project/uploadFile'"
-=======
             :multiple="false" :action="fileUploadServerBaseURL + '/project/uploadProject'"
->>>>>>> 25bf365 (feat: 实现统一项目上传和自动分析系统)
             :on-success="handleFileUploadSuccess" drag style="width: 100%" :on-error="handleFileUploadError">
             <el-icon class="el-icon--upload">
               <upload-filled />
