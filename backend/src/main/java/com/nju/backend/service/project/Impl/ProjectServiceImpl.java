@@ -131,9 +131,9 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
     /**
      * 异步分析项目的核心方法
      * 完整的分析流程：
-     * 1. 检测项目语言
-     * 2. 调用对应的Flask API解析依赖
-     * 3. 保存组件到数据库
+     * 1. 自动检测所有项目语言（支持多语言）
+     * 2. 使用parse_and_save_v2.py脚本解析依赖并保存到数据库
+     * 3. 获取保存的组件信息
      * 4. 匹配组件与漏洞
      * 5. 计算风险级别
      * 6. 更新项目状态
@@ -152,29 +152,29 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
             // 更新状态为"分析中"
             updateProjectStatus(projectId, "analyzing", null);
 
-            // 步骤1: 检测项目语言
-            System.out.println("步骤1: 检测项目语言...");
-            String language = projectUtil.detectProjectType(filePath);
-            System.out.println("检测到项目语言: " + language);
+            // 步骤1-3: 自动检测语言、解析依赖、保存到数据库
+            System.out.println("步骤1-3: 使用parse_and_save_v2.py自动检测语言并解析依赖...");
+            int savedCount = runPythonParseScript(projectId, filePath);
+            System.out.println("Python脚本保存的组件数: " + savedCount);
 
-            if ("unknown".equals(language)) {
-                updateProjectStatus(projectId, "failed", "Unable to detect project language");
+            if (savedCount < 0) {
+                updateProjectStatus(projectId, "failed", "Failed to run Python parse script");
                 return;
             }
 
-            // 更新项目语言
-            project.setLanguage(language);
-            projectMapper.updateById(project);
+            // 从数据库查询已保存的组件，获取语言和详细信息
+            System.out.println("步骤3.5: 从数据库查询项目信息...");
+            QueryWrapper<WhiteList> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("project_id", projectId);
+            List<WhiteList> components = whiteListMapper.selectList(queryWrapper);
+            System.out.println("从数据库查询到的组件数: " + components.size());
 
-            // 步骤2: 调用Flask API解析依赖
-            System.out.println("步骤2: 调用Flask API解析依赖...");
-            List<WhiteList> components = callFlaskParseAPI(filePath, language);
-            System.out.println("解析出组件数: " + components.size());
-
-            // 步骤3: 保存组件到数据库
-            System.out.println("步骤3: 保存组件到数据库...");
-            int savedCount = saveComponentsToDB(projectId, filePath, language, components);
-            System.out.println("成功保存组件数: " + savedCount);
+            // 从数据库更新项目的语言和组件数
+            Project updatedProject = projectMapper.selectById(projectId);
+            if (updatedProject != null) {
+                project.setLanguage(updatedProject.getLanguage());
+                project.setComponentCount(updatedProject.getComponentCount());
+            }
 
             // 步骤4: 匹配组件与漏洞
             System.out.println("步骤4: 匹配组件与漏洞...");
@@ -187,7 +187,6 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
             System.out.println("项目风险级别: " + riskLevel);
 
             // 步骤6: 更新项目状态为"已完成"
-            project.setComponentCount(savedCount);
             project.setVulnerabilityCount(vulnerabilityCount);
             project.setRiskLevel(riskLevel);
             project.setLastAnalysisTime(System.currentTimeMillis());
@@ -200,6 +199,80 @@ public class ProjectServiceImpl implements ProjectService, ApplicationContextAwa
         }
 
         System.out.println("======== 异步分析项目 " + projectId + " 完成 ========");
+    }
+
+    /**
+     * 运行Python parse_and_save_v2.py脚本进行自动语言检测和依赖解析
+     * 脚本会：
+     * 1. 自动检测项目中的所有编程语言
+     * 2. 为每种语言调用相应的解析器
+     * 3. 将依赖结果保存到数据库white_list表
+     * 4. 更新项目元数据（语言、组件数等）
+     *
+     * @param projectId 项目ID
+     * @param filePath 项目文件路径
+     * @return 保存的组件数，-1表示执行失败
+     */
+    private int runPythonParseScript(Integer projectId, String filePath) {
+        try {
+            System.out.println("执行Python脚本: parse_and_save_v2.py");
+            System.out.println("项目ID: " + projectId + ", 项目路径: " + filePath);
+
+            // 构建Python脚本命令
+            String pythonScriptPath = "/root/VulSystem/parse_and_save_v2.py";
+            ProcessBuilder processBuilder = new ProcessBuilder(
+                    "python3",
+                    pythonScriptPath,
+                    String.valueOf(projectId)
+            );
+
+            // 重定向错误输出到标准输出（便于日志记录）
+            processBuilder.redirectErrorStream(true);
+
+            // 启动进程
+            Process process = processBuilder.start();
+
+            // 读取脚本的输出（实时打印日志）
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()))) {
+                String line;
+                StringBuilder output = new StringBuilder();
+                while ((line = reader.readLine()) != null) {
+                    System.out.println("[Python] " + line);
+                    output.append(line).append("\n");
+                }
+            }
+
+            // 等待脚本执行完成（设置超时时间：60秒）
+            boolean completed = process.waitFor(60, java.util.concurrent.TimeUnit.SECONDS);
+            int exitCode = process.exitValue();
+
+            if (!completed) {
+                System.err.println("Python脚本执行超时 (60秒)");
+                process.destroy();
+                return -1;
+            }
+
+            if (exitCode != 0) {
+                System.err.println("Python脚本执行失败，退出码: " + exitCode);
+                return -1;
+            }
+
+            System.out.println("Python脚本执行成功");
+
+            // 查询数据库获取保存的组件数
+            QueryWrapper<WhiteList> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("project_id", projectId);
+            int componentCount = (int) whiteListMapper.selectCount(queryWrapper);
+            System.out.println("从数据库查询得到保存的组件数: " + componentCount);
+
+            return componentCount;
+
+        } catch (Exception e) {
+            System.err.println("执行Python脚本异常: " + e.getMessage());
+            e.printStackTrace();
+            return -1;
+        }
     }
 
     /**
