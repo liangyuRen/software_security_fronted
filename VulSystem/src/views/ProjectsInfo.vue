@@ -150,7 +150,7 @@ import {
   createProject, deleteProject,
   getProjectList,
   type ProjectCreateResponse,
-  type ProjectListResponse, updateProject
+  type ProjectListResponse, updateProject, checkProjectLanguage
 } from "@/components/Project/apis.ts";
 import LoadingFrames from "@/components/LoadingFrames.vue";
 import { getCompanyStatic, type StatisticsInfo } from '@/components/Statistic/const';
@@ -256,26 +256,77 @@ const option = ref({
 
 // project modification
 const addFormVisible = ref(false)
-const handleAddProject = (newProject: ProjectInfo) => {
-  console.log(newProject);
+const handleAddProject = async (newProject: ProjectInfo) => {
+  console.log('新建项目:', newProject);
 
-  createProject(newProject).then((res: ProjectCreateResponse) => {
-    console.log(res);
+  try {
+    const res = await createProject(newProject);
+    console.log('创建项目响应:', res);
+
     if (res.code === 200) {
       ElMessage({
         message: t('common.successfullyAdded'),
         type: 'success',
       })
-      // 重新加载项目列表，而不是刷新整个页面
+
+      // 重新加载项目列表
       const companyId = 1;
-      getProjects(companyId);
+      await getProjects(companyId);
+
+      // 延迟1秒后检查最新创建项目的语言
+      // 这样可以确保项目已经创建并且可以检查语言
+      setTimeout(async () => {
+        try {
+          if (projectInfos.value && projectInfos.value.length > 0) {
+            // 获取最新创建的项目（通常是列表中的第一个或者根据名称匹配）
+            const latestProject = projectInfos.value.find(p => p.name === newProject.name);
+
+            if (latestProject && latestProject.id) {
+              console.log('开始检查项目语言，项目ID:', latestProject.id);
+
+              try {
+                const languageRes = await checkProjectLanguage(latestProject.id);
+                if (languageRes.code === 200) {
+                  console.log('检测到的项目语言:', languageRes.obj);
+
+                  // 更新项目的语言信息
+                  latestProject.language = languageRes.obj;
+
+                  ElMessage({
+                    message: `已自动检测到项目语言: ${languageRes.obj}`,
+                    type: 'success',
+                  });
+
+                  // 重新加载项目列表以显示更新的语言信息
+                  await getProjects(companyId);
+                  filterProjects();
+                } else {
+                  console.warn('检查项目语言返回非200状态:', languageRes);
+                }
+              } catch (error) {
+                console.error('检查项目语言出错:', error);
+                // 不影响项目创建的流程，静默处理
+              }
+            }
+          }
+        } catch (error) {
+          console.error('获取最新项目信息出错:', error);
+        }
+      }, 1000);
     } else {
       ElMessage({
         message: t('common.addFailed') + res.message + ' ' + res.obj,
         type: 'error',
       })
     }
-  });
+  } catch (error) {
+    console.error('创建项目失败:', error);
+    ElMessage({
+      message: t('common.addFailed'),
+      type: 'error',
+    })
+  }
+
   addFormVisible.value = false;
 }
 
@@ -426,87 +477,193 @@ async function getProjects(companyId: number, page?: number) {
 // project statistic
 const projectStatistic = ref<StatisticsInfo>()
 onMounted(async () => {
-  const companyId =1
+  const companyId = 1
   //const companyId = localStorage.getItem('companyId');
   await getProjects(companyId);
   filterProjects();
-  // 获取统计信息
+
+  // 立即使用项目列表数据计算统计信息
+  if (projectInfos.value && projectInfos.value.length > 0) {
+    console.log('从项目列表计算统计信息...');
+
+    // 计算各风险等级的项目数
+    const highRiskNum = projectInfos.value.filter(p => p.risk_level === '高风险').length;
+    const midRiskNum = projectInfos.value.filter(p => p.risk_level === '中风险').length;
+    const lowRiskNum = projectInfos.value.filter(p => p.risk_level === '低风险').length;
+    const noRiskNum = projectInfos.value.filter(p => p.risk_level === '暂无风险').length;
+
+    // 创建统计信息对象
+    const statistics: StatisticsInfo = {
+      projectNum: projectInfos.value.length,
+      highRiskNum: highRiskNum,
+      lowRiskNum: lowRiskNum,
+      noRiskNum: noRiskNum,
+      cVulnerabilityNum: 0,
+      highRiskVulnerabilityNum: 0,
+      javaVulnerabilityNum: 0,
+      midRiskVulnerabilityNum: 0,
+      thirdLibraryNum: 0,
+      vulnerabilityNum: 0,
+      highVulnerabilityNumByDay: '',
+      lowVulnerabilityNumByDay: '',
+      midVulnerabilityNumByDay: '',
+    };
+
+    projectStatistic.value = statistics;
+    console.log('统计数据:', statistics);
+
+    // 更新图表数据
+    const newOptionSeries = [
+      {
+        name: t('projects.high'),
+        type: 'bar',
+        stack: 'total',
+        label: {
+          show: highRiskNum != 0
+        },
+        emphasis: {
+          focus: 'series'
+        },
+        data: [highRiskNum],
+        itemStyle: {
+          borderRadius: 5,
+          color: '#9045ff'
+        },
+        barMaxWidth: 45,
+        barMaxHeight: 30
+      },
+      {
+        name: t('projects.low'),
+        type: 'bar',
+        stack: 'total',
+        label: {
+          show: lowRiskNum != 0
+        },
+        emphasis: {
+          focus: 'series'
+        },
+        data: [lowRiskNum],
+        itemStyle: {
+          borderRadius: 5,
+          color: '#2967ff',
+        },
+        barMinHeight: 5,
+      },
+      {
+        name: t('common.noRiskDetected'),
+        type: 'bar',
+        stack: 'total',
+        label: {
+          show: noRiskNum != 0
+        },
+        emphasis: {
+          focus: 'series'
+        },
+        data: [noRiskNum],
+        itemStyle: {
+          borderRadius: 5,
+          color: '#1c9a00',
+        },
+        barCategoryGap: '30%',
+        barMinHeight: 50,
+      },
+    ]
+    option.value = {
+      ...option.value,
+      series: newOptionSeries
+    }
+  }
+
+  // 同时尝试从后端获取统计信息，如果成功则覆盖前面的数据
   getCompanyStatic()
     .then(res => {
-      const statistics: StatisticsInfo = res.data.obj
-      console.log('statistics:', statistics);
-      projectStatistic.value = statistics
-      // 项目风险等级分布
-      const newOptionSeries = [
-        {
-          name: t('projects.high'),
-          type: 'bar',
-          stack: 'total',
-          label: {
-            show: statistics.highRiskNum != 0
-            // show: true
-          },
-          emphasis: {
-            focus: 'series'
-          },
-          data: [statistics.highRiskNum],
-          itemStyle: {
-            borderRadius: 5,
-            // color: '#EE6666' // 设置颜色
-            color: '#9045ff'
-          },
-          barMaxWidth: 45, // 设置柱子的最大宽度，可以控制柱子的整体高度
-          // barMinHeight: 50, // 设置柱子的最小高度
-          barMaxHeight: 30
-          // z: 3,
-        },
-        {
-          name: t('projects.low'),
-          type: 'bar',
-          stack: 'total',
-          label: {
-            // show: true
-            show: statistics.lowRiskNum != 0
-          },
-          emphasis: {
-            focus: 'series'
-          },
-          data: [statistics.lowRiskNum],
-          itemStyle: {
-            borderRadius: 5, // Add rounded corners
-            // color: '#fac858'
-            color: '#2967ff',
-          },
-          barMinHeight: 5, // 设置柱子的最小高度
-          // z: 2,
-        },
-        {
-          name: t('common.noRiskDetected'),
-          type: 'bar',
-          stack: 'total',
-          label: {
-            show: statistics.noRiskNum != 0
-            // show: true
-          },
-          emphasis: {
-            focus: 'series'
-          },
-          data: [statistics.noRiskNum],
-          // data: 5,
-          itemStyle: {
-            borderRadius: 5, // Add rounded corners
-            // color: '#91cc75'
-            color: '#1c9a00',
-          },
-          barCategoryGap: '30%', // 设置柱状图之间的间隔
-          barMinHeight: 50, // 设置柱子的最小高度
-        },
-      ]
-      option.value = {
-        ...option.value,
-        series: newOptionSeries
-      }
+      // 检查是否真正获取到了有效的统计数据
+      if (res.data && res.data.code === 200 && res.data.obj && typeof res.data.obj === 'object' && !Array.isArray(res.data.obj)) {
+        const statistics: StatisticsInfo = res.data.obj
+        console.log('后端统计信息:', statistics);
+        projectStatistic.value = statistics
 
+        // 项目风险等级分布
+        const newOptionSeries = [
+          {
+            name: t('projects.high'),
+            type: 'bar',
+            stack: 'total',
+            label: {
+              show: statistics.highRiskNum != 0
+            },
+            emphasis: {
+              focus: 'series'
+            },
+            data: [statistics.highRiskNum],
+            itemStyle: {
+              borderRadius: 5,
+              color: '#9045ff'
+            },
+            barMaxWidth: 45,
+            barMaxHeight: 30
+          },
+          {
+            name: t('projects.low'),
+            type: 'bar',
+            stack: 'total',
+            label: {
+              show: statistics.lowRiskNum != 0
+            },
+            emphasis: {
+              focus: 'series'
+            },
+            data: [statistics.lowRiskNum],
+            itemStyle: {
+              borderRadius: 5,
+              color: '#2967ff',
+            },
+            barMinHeight: 5,
+          },
+          {
+            name: t('common.noRiskDetected'),
+            type: 'bar',
+            stack: 'total',
+            label: {
+              show: statistics.noRiskNum != 0
+            },
+            emphasis: {
+              focus: 'series'
+            },
+            data: [statistics.noRiskNum],
+            itemStyle: {
+              borderRadius: 5,
+              color: '#1c9a00',
+            },
+            barCategoryGap: '30%',
+            barMinHeight: 50,
+          },
+        ]
+        option.value = {
+          ...option.value,
+          series: newOptionSeries
+        }
+
+        ElMessage({
+          message: '统计数据已从后端更新',
+          type: 'success',
+        });
+      } else {
+        console.warn('后端返回的统计数据格式不正确:', res.data);
+        ElMessage({
+          message: '使用项目列表数据显示统计信息',
+          type: 'info',
+        });
+      }
+    })
+    .catch((err) => {
+      console.error('获取后端统计信息失败:', err);
+      // 如果后端API失败，前面已经用项目列表数据设置了统计信息
+      // 这里不需要做额外处理
+      ElMessage({
+        message: '使用项目列表数据显示统计信息',
+        type: 'info',
+      });
     })
 })
 </script>

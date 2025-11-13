@@ -251,6 +251,7 @@ export default {
   },
   projectCard: {
     detectionThreshold: '检测标准阈值: ',
+    projectLanguage: '项目语言: ',
     modifyProjectFiles: '修改项目文件',
     highRisk: '高风险',
     mediumRisk: '中风险',

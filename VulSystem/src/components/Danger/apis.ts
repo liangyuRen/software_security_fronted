@@ -48,10 +48,14 @@ export const getVulnerabilityReportList = (page: number, size: number): Promise<
     instance
       .get(`/vulnerabilityReport/list?page=${page}&size=${size}`)
       .then((res: AxiosResponse<VulnerabilityReportListResponse>) => {
+        console.log('=== API Raw Response ===');
+        console.log('Status:', res.status);
+        console.log('Data:', JSON.stringify(res.data, null, 2));
+        console.log('========================');
         resolve(res.data)
       })
       .catch((err: AxiosError) => {
-        console.error(err)
+        console.error('API Error:', err)
         reject(err)
       })
   })

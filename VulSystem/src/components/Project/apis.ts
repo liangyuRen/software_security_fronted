@@ -67,6 +67,27 @@ export const deleteProject = (project: FormData): Promise<ProjectCreateResponse>
   })
 }
 
+export interface CheckProjectLanguageResponse {
+  code: number
+  message: string
+  obj: string  // 返回识别到的语言
+}
+
+export const checkProjectLanguage = (projectId: number): Promise<CheckProjectLanguageResponse> => {
+  return new Promise((resolve, reject) => {
+    instance
+      .get(`/project/checkLanguage?projectId=${projectId}`)
+      .then((res: AxiosResponse<CheckProjectLanguageResponse>) => {
+        console.log('检查项目语言结果:', res.data)
+        resolve(res.data)
+      })
+      .catch((err: AxiosError) => {
+        console.error('检查项目语言失败:', err)
+        reject(err)
+      })
+  })
+}
+
 export interface ProjectListResponse {
   code: number
   message: string

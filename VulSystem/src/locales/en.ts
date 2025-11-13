@@ -251,6 +251,7 @@ export default {
   },
   projectCard: {
     detectionThreshold: 'Detection Threshold: ',
+    projectLanguage: 'Project Language: ',
     modifyProjectFiles: 'Modify Project Files',
     highRisk: 'High Risk',
     mediumRisk: 'Medium Risk',

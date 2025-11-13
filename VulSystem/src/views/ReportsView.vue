@@ -117,9 +117,11 @@ const riskLevelOptions = ['Low', 'Medium', 'High']
 const selectedTime = ref([])
 
 const reportList = ref<ReportInfo[]>([]);
+const allReports = ref<ReportInfo[]>([]); // 存储所有获取的报告数据
 const currentPage = ref(1);
 const totalPages = ref(0);
 const totalItems = ref(0);
+const pageSize = 10;
 
 // loading-frames
 const isLoading = ref(true);
@@ -127,20 +129,33 @@ const isLoading = ref(true);
 // report list
 function currentChange(page: number) {
   currentPage.value = page;
-  getReports(page);
+  // 前端分页：从allReports中截取当前页的数据
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  reportList.value = allReports.value.slice(startIndex, endIndex);
+  console.log(`分页到第${page}页，显示第${startIndex + 1}-${endIndex}条`);
 }
 
-async function getReports(currentPage: number) {
+async function getReports(currentPage: number = 1) {
   isLoading.value = true;
-  const pageSize = 10;
   reportList.value = [];
-  await getVulnerabilityReportList(currentPage, pageSize).then((res) => {
+  try {
+    const res = await getVulnerabilityReportList(1, 10); // 固定请求第一页，因为后端返回全部数据
     const data:VulnerabilityReportListResponse = res;
-    totalPages.value = data.obj.pages;
-    totalItems.value = data.obj.total;
-    for(let i=0; i<data.obj.records.length; i++) {
+
+    console.log('=== API响应数据 ===');
+    console.log('返回的记录数:', data.obj.records?.length);
+    console.log('后端total字段:', data.obj.total);
+    console.log('后端pages字段:', data.obj.pages);
+
+    // 清空并获取所有数据
+    allReports.value = [];
+
+    // 处理返回的数据记录
+    if (data.obj.records && data.obj.records.length > 0) {
+      for(let i=0; i<data.obj.records.length; i++) {
         const report = data.obj.records[i];
-        reportList.value.push({
+        allReports.value.push({
           reportName: report.vulnerabilityName,
           reportDesc: report.description,
           reportId: report.cveId,
@@ -148,9 +163,27 @@ async function getReports(currentPage: number) {
           riskLevel: report.riskLevel,
           ref: report.referenceLink
         });
+      }
     }
-    console.log(reportList.value);
-  });
+
+    // 计算分页信息
+    totalItems.value = allReports.value.length;
+    totalPages.value = Math.ceil(totalItems.value / pageSize);
+
+    console.log('总数据条数:', totalItems.value);
+    console.log('总页数:', totalPages.value);
+    console.log('=====================');
+
+    // 显示第一页
+    currentPage = 1;
+    currentChange(1);
+  } catch (error) {
+    console.error('Failed to fetch reports:', error);
+    totalPages.value = 0;
+    totalItems.value = 0;
+    reportList.value = [];
+    allReports.value = [];
+  }
   isLoading.value = false;
 }
 
@@ -184,11 +217,13 @@ function debounce<T extends (...args: never[]) => Promise<void> | void>(
 async function searchReports(keyword: string) {
   filteredReports.value = [];
   isLoading.value = true;
-  await getVulnerabilityReportSearch(keyword).then((res) => {
+  try {
+    const res = await getVulnerabilityReportSearch(keyword);
     const data:VulnerabilityReportSearchResponse = res;
-    for(let i=0; i<data.obj.length; i++) {
+    if (data.obj && data.obj.length > 0) {
+      for(let i=0; i<data.obj.length; i++) {
         const report = data.obj[i];
-      filteredReports.value.push({
+        filteredReports.value.push({
           reportName: report.vulnerabilityName,
           reportDesc: report.description,
           reportId: report.cveId,
@@ -196,9 +231,13 @@ async function searchReports(keyword: string) {
           riskLevel: report.riskLevel,
           ref: report.referenceLink
         });
+      }
     }
-    console.log(filteredReports.value);
-  });
+    console.log('搜索到', filteredReports.value.length, '条记录');
+  } catch (error) {
+    console.error('Failed to search reports:', error);
+    filteredReports.value = [];
+  }
   isLoading.value = false;
 }
 const debouncedSearch = debounce(async (query: string) => {
@@ -218,22 +257,28 @@ async function filterReports(riskLevel: string, startTime: string, endTime: stri
   const formattedStartTime = startTime ? dayjs(startTime).format(TIME_FORMAT) : '';
   const formattedEndTime = endTime ? dayjs(endTime).format(TIME_FORMAT) : '';
   filteredReports.value = [];
-  await getFilteredVulnerabilityReport(riskLevel, formattedStartTime, formattedEndTime).then((res) => {
+  try {
+    const res = await getFilteredVulnerabilityReport(riskLevel, formattedStartTime, formattedEndTime);
     const data:VulnerabilityReportSearchResponse = res;
-    console.log(data);
-    for(let i=0; i<data.obj.length; i++) {
+    console.log('过滤结果数据:', data);
+    if (data.obj && data.obj.length > 0) {
+      for(let i=0; i<data.obj.length; i++) {
         const report = data.obj[i];
         filteredReports.value.push({
-            reportName: report.vulnerabilityName,
-            reportDesc: report.description,
-            reportId: report.cveId,
-            time: report.disclosureTime,
-            riskLevel: report.riskLevel,
-            ref: report.referenceLink
+          reportName: report.vulnerabilityName,
+          reportDesc: report.description,
+          reportId: report.cveId,
+          time: report.disclosureTime,
+          riskLevel: report.riskLevel,
+          ref: report.referenceLink
         });
+      }
     }
-    console.log(filteredReports.value);
-  });
+    console.log('过滤到', filteredReports.value.length, '条记录');
+  } catch (error) {
+    console.error('Failed to filter reports:', error);
+    filteredReports.value = [];
+  }
   isLoading.value = false;
 }
 

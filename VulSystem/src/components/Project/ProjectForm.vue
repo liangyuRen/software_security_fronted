@@ -5,6 +5,7 @@ import { QuestionFilled } from "@element-plus/icons-vue";
 import LanguageSelector from "@/components/Project/LanguageSelector.vue";
 import { ElMessage, type FormInstance, type UploadInstance } from "element-plus";
 import { UploadFilled } from '@element-plus/icons-vue'
+import { checkProjectLanguage } from './apis';
 
 
 // props and emits
@@ -162,11 +163,16 @@ const uploadFile = () => {
     uploader.value.submit()
   }
 }
-const handleFileUploadSuccess = (response: any) => {
+const handleFileUploadSuccess = async (response: any) => {
   console.log('服务器的响应：', response)
   if (response.code === 200) {
     ElMessage.success('文件上传成功')
     newProject.filePath = response.obj
+
+    // 自动检查项目语言
+    // 注意：此时项目可能还未创建，所以这里无法立即检查
+    // 语言检查应该在项目创建完成后进行
+    console.log('文件上传完成，项目信息:', newProject)
   } else {
     ElMessage.error('文件上传失败：' + response.message + '，' + response.obj)
     currentFile.value = null
@@ -175,6 +181,7 @@ const handleFileUploadSuccess = (response: any) => {
     }
   }
 }
+
 
 const handleFileUploadError = (err: any) => {
   console.error('文件上传失败：', err)

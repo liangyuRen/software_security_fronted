@@ -97,6 +97,7 @@ const handleEditFile = (project: ProjectInfo) => {
     </div>
     <div class="detail" v-if="isOpen">
       <div class="text">{{ t('projectCard.detectionThreshold') }}{{ project.risk_threshold ?? 10 }}</div>
+      <div class="text">{{ t('projectCard.projectLanguage') }}{{ project.language ?? 'java' }}</div>
       <div class="modify-project-button" @click="editFileFormVisible = true">
         {{ t('projectCard.modifyProjectFiles') }}
       </div>
