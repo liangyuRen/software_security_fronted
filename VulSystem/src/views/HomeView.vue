@@ -1,19 +1,18 @@
 <template>
   <el-container class="home_container" :class="{ login: isLoginPage }">
     <el-header class="header" v-if="!isLoginPage">
-      <h2>库灵之眼</h2>
+      <h2>{{ $t('common.welcome') }}</h2>
       <div class="user-entry">
+        <LanguageSwitcher />
         <el-icon size="24">
           <User />
         </el-icon>
-        <div v-if="!isLogin" class="login" @click="handleLogin">登录/注册</div>
+        <div v-if="!isLogin" class="login" @click="handleLogin">{{ $t('common.loginRegister') }}</div>
         <div v-else class="user-name">
           <span>
-            {{
-              '欢迎您，' + username
-            }}
+            {{ $t('common.welcomeUser', { username }) }}
           </span>
-          <span class="login" @click="handleLogout">退出登录</span>
+          <span class="login" @click="handleLogout">{{ $t('common.logout') }}</span>
         </div>
       </div>
     </el-header>
@@ -26,31 +25,30 @@
               <el-icon>
                 <DocumentCopy />
               </el-icon>
-              <span class="menu-title">项目管理</span>
+              <span class="menu-title">{{ $t('menu.projectManagement') }}</span>
             </template>
             <el-menu-item style="margin-left: 16px;" v-for="sub in titles[0].subTitle" :key="sub.index"
               :index="'/projects' + sub.path">
-              {{
-                sub.uname
-              }}</el-menu-item>
+              {{ sub.uname }}
+            </el-menu-item>
           </el-sub-menu>
           <el-menu-item index="/reports" class="menu-title">
             <el-icon>
               <DataLine />
             </el-icon>
-            <template #title>漏洞报告</template>
+            <template #title>{{ $t('menu.vulnerabilityReports') }}</template>
           </el-menu-item>
           <el-menu-item index="/optimize" class="menu-title">
             <el-icon>
               <Setting />
             </el-icon>
-            <template #title>应用优化</template>
+            <template #title>{{ $t('menu.applicationOptimization') }}</template>
           </el-menu-item>
           <el-menu-item index="/users" class="menu-title">
             <el-icon>
               <Discount />
             </el-icon>
-            <template #title>用户中心</template>
+            <template #title>{{ $t('menu.userCenter') }}</template>
           </el-menu-item>
         </el-menu>
       </el-aside>
@@ -71,10 +69,13 @@ import {
   DataLine, Discount,
   User, Setting
 } from '@element-plus/icons-vue'
-import {computed, ref, onMounted} from 'vue'
+import {computed, ref, onMounted, watch} from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import LLMHelper from "@/components/LLMHelper/LLMHelper.vue";
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 const route = useRoute();
+const { t } = useI18n();
 
 const defaultIndex = computed(() => {
   const fullPath = route.path; // 获取当前路径
@@ -111,39 +112,39 @@ interface NavTitle {
   path: string,
   subTitle?: NavTitle[],
 }
-const titles: NavTitle[] = [
+const titles = computed(() => [
   {
     index: '0',
-    uname: '项目管理',
+    uname: t('menu.projectManagement'),
     path: '/projects',
     subTitle: [
       {
         index: '0-0',
-        uname: '项目信息',
+        uname: t('menu.projectInfo'),
         path: '/info',
       },
       {
         index: '0-1',
-        uname: '项目综合分析',
+        uname: t('menu.projectAnalysis'),
         path: '/analy',
       },
     ]
   }, {
     index: '1',
-    uname: '漏洞报告',
+    uname: t('menu.vulnerabilityReports'),
     path: '/reports',
   },
   {
     index: '2',
-    uname: '应用优化',
+    uname: t('menu.applicationOptimization'),
     path: '/optimize',
   },
   {
     index: '3',
-    uname: '用户中心',
+    uname: t('menu.userCenter'),
     path: '/users',
   },
-]
+])
 
 onMounted(() => {
   companyId.value = localStorage.getItem('companyId') || '';

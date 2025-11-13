@@ -3,6 +3,9 @@ import { computed, ref } from 'vue';
 import { type ProjectInfo } from './const';
 import { Edit, Delete, ArrowDown, ArrowRight } from '@element-plus/icons-vue'
 import ProjectForm from "@/components/Project/ProjectForm.vue";
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -25,24 +28,24 @@ const statusTag = computed(() => {
       color: '#FF5340',
       bgc: '#FFF4F1',
       // text: '高危 ' + (props.project.danger ?? 0)
-      text: '高风险'
+      text: t('projectCard.highRisk')
     },
     ['低风险']: {
       color: '#336FFF',
       bgc: '#E5EFFF',
       // text: '分析中'
-      text: '低风险'
+      text: t('projectCard.lowRisk')
     },
     ['中风险']: {
       color: '#8b5cf6',
       bgc: '#f3e8ff',
-      text: '中风险'
+      text: t('projectCard.mediumRisk')
       // text: '中危 ' + (props.project.danger ?? 0)
     },
     ['暂无风险']: {
       color: '#3EC01E',
       bgc: '#E4FBE5',
-      text: '暂无风险'
+      text: t('projectCard.noRisk')
     }
   }
   return tags[props.project.risk_level]
@@ -93,9 +96,9 @@ const handleEditFile = (project: ProjectInfo) => {
       </div>
     </div>
     <div class="detail" v-if="isOpen">
-      <div class="text">检测标准阈值: {{ project.risk_threshold ?? 10 }}</div>
+      <div class="text">{{ t('projectCard.detectionThreshold') }}{{ project.risk_threshold ?? 10 }}</div>
       <div class="modify-project-button" @click="editFileFormVisible = true">
-        修改项目文件
+        {{ t('projectCard.modifyProjectFiles') }}
       </div>
     </div>
   </div>

@@ -9,8 +9,8 @@
             <DocumentCopy />
           </el-icon>
           <div class="title-text">
-            <h1 class="page-title">项目管理</h1>
-            <p class="page-subtitle">管理和监控您的项目安全状态</p>
+            <h1 class="page-title">{{ $t('projects.projectManagement') }}</h1>
+            <p class="page-subtitle">{{ $t('projects.manageAndMonitor') }}</p>
           </div>
         </div>
 
@@ -23,7 +23,7 @@
               </el-icon>
             </div>
             <div class="stat-content">
-              <div class="stat-label">项目风险分布</div>
+              <div class="stat-label">{{ $t('projects.projectRiskDistribution') }}</div>
               <WChart width="100%" height="120px" :option="option"></WChart>
             </div>
           </div>
@@ -35,7 +35,7 @@
               </el-icon>
             </div>
             <div class="stat-content">
-              <div class="stat-label">已上传项目</div>
+              <div class="stat-label">{{ $t('projects.uploadedProjects') }}</div>
               <div class="stat-value">{{ projectStatistic?.projectNum || 0 }}</div>
             </div>
           </div>
@@ -47,7 +47,7 @@
               </el-icon>
             </div>
             <div class="stat-content">
-              <div class="stat-label">发现漏洞数</div>
+              <div class="stat-label">{{ $t('projects.foundVulnerabilities') }}</div>
               <div class="stat-value">{{ projectStatistic?.vulnerabilityNum || 0 }}</div>
             </div>
           </div>
@@ -62,12 +62,12 @@
           <el-icon class="section-icon">
             <Folder />
           </el-icon>
-          项目仓库
+          {{ $t('projects.projectRepository') }}
         </h2>
         <div class="section-actions">
           <el-input
             v-model="searchValue"
-            placeholder="搜索项目名称..."
+            :placeholder="$t('projects.searchProject')"
             class="search-input"
             clearable
           >
@@ -85,7 +85,7 @@
             <el-icon class="btn-icon">
               <Plus />
             </el-icon>
-            新建项目
+            {{ $t('projects.createProject') }}
           </el-button>
         </div>
       </div>
@@ -120,7 +120,7 @@
           </div>
         </div>
         <div v-else class="empty-state">
-          <el-empty description="暂无项目" :image-size="120" />
+          <el-empty :description="$t('common.noData')" :image-size="120" />
         </div>
       </div>
     </div>
@@ -143,6 +143,9 @@ import { type ProjectInfo } from '@/components/Project/const';
 import {onMounted, ref, watch, computed} from 'vue';
 import ProjectForm from '@/components/Project/ProjectForm.vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n()
 import {
   createProject, deleteProject,
   getProjectList,
@@ -187,7 +190,7 @@ const option = ref({
   },
   series: [
     {
-      name: '高风险',
+      name: t('projects.high'),
       type: 'bar',
       stack: 'total',
       label: {
@@ -207,7 +210,7 @@ const option = ref({
       // z: 5
     },
     {
-      name: '低风险',
+      name: t('projects.low'),
       type: 'bar',
       stack: 'total',
       label: {
@@ -227,7 +230,7 @@ const option = ref({
       // z: 3
     },
     {
-      name: '暂无风险',
+      name: t('common.noRiskDetected'),
       type: 'bar',
       stack: 'total',
       label: {
@@ -260,7 +263,7 @@ const handleAddProject = (newProject: ProjectInfo) => {
     console.log(res);
     if (res.code === 200) {
       ElMessage({
-        message: '成功添加',
+        message: t('common.successfullyAdded'),
         type: 'success',
       })
       // 重新加载项目列表，而不是刷新整个页面
@@ -268,7 +271,7 @@ const handleAddProject = (newProject: ProjectInfo) => {
       getProjects(companyId);
     } else {
       ElMessage({
-        message: '添加失败: ' + res.message + ' ' + res.obj,
+        message: t('common.addFailed') + res.message + ' ' + res.obj,
         type: 'error',
       })
     }
@@ -283,7 +286,7 @@ const handleEditProject = (project: ProjectInfo) => {
     console.log(res);
     if (res.code === 200) {
       ElMessage({
-        message: '成功更新',
+        message: t('common.successfullyUpdated'),
         type: 'success',
       })
       // 重新加载项目列表，而不是刷新整个页面
@@ -291,20 +294,20 @@ const handleEditProject = (project: ProjectInfo) => {
       getProjects(companyId);
     } else {
       ElMessage({
-        message: '更新失败: ' + res.message + ' ' + res.obj,
+        message: t('common.updateFailed') + res.message + ' ' + res.obj,
         type: 'error',
       })
     }
   }).catch((err) => {
     console.log(err);
-    ElMessage.error('更新失败');
+    ElMessage.error(t('common.updateProjectFailed'));
   });
 }
 
 const handleDeleteProject = (project: ProjectInfo) => {
-  ElMessageBox.confirm('您确定要删除该项目吗?', {
-    confirmButtonText: '确认',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('common.confirmDelete'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
   })
     .then(() => {
       console.log(project);
@@ -313,7 +316,7 @@ const handleDeleteProject = (project: ProjectInfo) => {
         console.log(res);
         if (res.code === 200) {
           ElMessage({
-            message: '成功删除',
+            message: t('common.successfullyDeleted'),
             type: 'success',
           })
           // 重新加载项目列表，而不是刷新整个页面
@@ -321,19 +324,19 @@ const handleDeleteProject = (project: ProjectInfo) => {
           getProjects(companyId);
         } else {
           ElMessage({
-            message: '删除失败: ' + res.message + ' ' + res.obj,
+            message: t('common.deleteFailed') + res.message + ' ' + res.obj,
             type: 'error',
           })
         }
       }).catch((err) => {
         console.log(err);
-        ElMessage.error('删除失败');
+        ElMessage.error(t('common.deleteProjectFailed'));
       });
     })
     .catch(() => {
       ElMessage({
         type: 'info',
-        message: '已取消删除'
+        message: t('common.cancelledDelete')
       });
     })
 }
@@ -400,7 +403,7 @@ async function getProjects(companyId: number, page?: number) {
     await getProjectList(1, 1000, companyId).then((res) => { // 获取所有数据用于计算总数
       const data: ProjectListResponse = res;
       if (data.code !== 200) {
-        ElMessage.error('获取项目列表失败');
+        ElMessage.error(t('common.getProjectListFailed'));
         console.error(data);
         return;
       }
@@ -409,7 +412,7 @@ async function getProjects(companyId: number, page?: number) {
       filteredProjects.value = data.obj;
     }).catch((err) => {
       console.log(err);
-      ElMessage.error('获取项目列表失败');
+      ElMessage.error(t('common.getProjectListFailed'));
     });
   } else {
     // 对于其他页面，我们使用已有的数据进行分页
@@ -436,7 +439,7 @@ onMounted(async () => {
       // 项目风险等级分布
       const newOptionSeries = [
         {
-          name: '高风险',
+          name: t('projects.high'),
           type: 'bar',
           stack: 'total',
           label: {
@@ -458,7 +461,7 @@ onMounted(async () => {
           // z: 3,
         },
         {
-          name: '低风险',
+          name: t('projects.low'),
           type: 'bar',
           stack: 'total',
           label: {
@@ -478,7 +481,7 @@ onMounted(async () => {
           // z: 2,
         },
         {
-          name: '暂无风险',
+          name: t('common.noRiskDetected'),
           type: 'bar',
           stack: 'total',
           label: {

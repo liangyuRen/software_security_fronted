@@ -9,8 +9,8 @@
             <UserFilled />
           </el-icon>
           <div class="title-text">
-            <h1 class="page-title">用户中心</h1>
-            <p class="page-subtitle">管理您的个人信息和账户设置</p>
+            <h1 class="page-title">{{ $t('user.userCenter') }}</h1>
+            <p class="page-subtitle">{{ $t('user.managePersonalInfo') }}</p>
           </div>
         </div>
       </div>
@@ -22,11 +22,11 @@
         <table class="user-info-table">
           <thead>
             <tr>
-              <th class="user-col">用户信息</th>
-              <th class="role-col">职位</th>
-              <th class="contact-col">联系方式</th>
-              <th class="team-col">所属团队</th>
-              <th class="status-col">会员状态</th>
+              <th class="user-col">{{ $t('user.userInfo') }}</th>
+              <th class="role-col">{{ $t('user.position') }}</th>
+              <th class="contact-col">{{ $t('user.contactInfo') }}</th>
+              <th class="team-col">{{ $t('user.team') }}</th>
+              <th class="status-col">{{ $t('user.membershipStatus') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -49,7 +49,7 @@
                   <el-icon class="cell-icon position-icon" :size="20">
                     <Briefcase />
                   </el-icon>
-                  <span>{{ userInfo.role || '暂无职位信息' }}</span>
+                  <span>{{ userInfo.role || $t('user.noPositionInfo') }}</span>
                 </div>
               </td>
               <td class="contact-col">
@@ -58,13 +58,13 @@
                     <el-icon class="cell-icon phone-icon" :size="16">
                       <Phone />
                     </el-icon>
-                    <span>{{ userInfo.phone || '暂无手机号' }}</span>
+                    <span>{{ userInfo.phone || $t('user.noPhone') }}</span>
                   </div>
                   <div class="contact-item">
                     <el-icon class="cell-icon email-icon" :size="16">
                       <Message />
                     </el-icon>
-                    <span>{{ userInfo.email || '暂无邮箱' }}</span>
+                    <span>{{ userInfo.email || $t('user.noEmail') }}</span>
                   </div>
                 </div>
               </td>
@@ -73,7 +73,7 @@
                   <el-icon class="cell-icon team-icon" :size="20">
                     <OfficeBuilding />
                   </el-icon>
-                  <span>{{ userInfo.team || '暂无团队信息' }}</span>
+                  <span>{{ userInfo.team || $t('user.noTeamInfo') }}</span>
                 </div>
               </td>
               <td class="status-col">

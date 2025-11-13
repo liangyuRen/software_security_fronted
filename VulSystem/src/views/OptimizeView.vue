@@ -9,8 +9,8 @@
             <Setting />
           </el-icon>
           <div class="title-text">
-            <h1 class="page-title">应用优化</h1>
-            <p class="page-subtitle">配置检测策略和模型参数，提升漏洞检测准确率</p>
+            <h1 class="page-title">{{ $t('optimize.applicationOptimization') }}</h1>
+            <p class="page-subtitle">{{ $t('optimize.optimizeAndImprove') }}</p>
           </div>
         </div>
       </div>
@@ -23,12 +23,12 @@
           <el-icon class="section-icon">
             <Tools />
           </el-icon>
-          参数配置
+          {{ $t('optimize.parameterConfiguration') }}
         </h2>
       </div>
       <div class="section-content">
         <DataSetting
-          :threshold-name="stratage?.detectStrategy.endsWith('whiteList') ? '误报过滤阈值' : '相似度阈值'"
+          :threshold-name="stratage?.detectStrategy.endsWith('whiteList') ? $t('optimize.falsePositiveThreshold') : $t('optimize.similarityThreshold')"
           :threshold="stratage?.similarityThreshold ?? 0.5"
           :K="stratage?.maxDetectNums ?? 1"
           @update:threshold="updateThreshold"
@@ -44,13 +44,13 @@
           <el-icon class="section-icon">
             <Filter />
           </el-icon>
-          模型筛选
+          {{ $t('optimize.modelFilter') }}
         </h2>
       </div>
       <div class="section-content">
         <div class="filter-container">
           <div class="filter-line">
-            <div class="filter-label">模型类型</div>
+            <div class="filter-label">{{ $t('optimize.modelType') }}</div>
             <ul class="filter-list">
               <li
                 v-for="item in modelFilterList"
@@ -64,7 +64,7 @@
             </ul>
           </div>
           <div class="filter-line">
-            <div class="filter-label">优化器</div>
+            <div class="filter-label">{{ $t('optimize.optimizer') }}</div>
             <ul class="filter-list">
               <li
                 v-for="item in optimizeFilterList"
@@ -123,11 +123,14 @@
 <script setup lang="ts">
 import { Setting, InfoFilled, Tools, Filter, DataAnalysis } from '@element-plus/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import DataSetting from '@/components/Optimize/DataSetting.vue';
 import LlmInfo from '@/components/Optimize/LlmInfo.vue';
 import { ModelType, OptimizeType, type CompanyStrategy, type LlmInfoType } from '@/components/Optimize/const';
 import { ElMessage } from 'element-plus';
 import { changeStrategy, getStrategy } from '@/components/Optimize/service';
+
+const { t } = useI18n()
 // import TestTree from '@/components/TestTree.vue';
 // const chosenLlmName = ref<string>('VulLibMiner')
 const choosenFilter = ref<{ model: 'all' | ModelType, optimize: 'all' | OptimizeType }>({
@@ -348,7 +351,7 @@ const updateStratageName = (value: string) => {
 const changeStratage = () => {
   if (stratage.value) {
     changeStrategy(stratage.value)
-      .then(() => ElMessage.success('已成功修改配置'))
+      .then(() => ElMessage.success(t('common.configUpdated')))
   }
 }
 

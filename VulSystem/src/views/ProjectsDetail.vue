@@ -4,46 +4,46 @@
       <el-icon color="#336FFF" size="14">
         <DocumentCopy />
       </el-icon>
-      <span class="bread-item">项目管理</span>
+      <span class="bread-item">{{ $t('menu.projectManagement') }}</span>
     </el-breadcrumb-item>
-    <el-breadcrumb-item :to="{ path: '/projects/info' }">项目信息</el-breadcrumb-item>
+    <el-breadcrumb-item :to="{ path: '/projects/info' }">{{ $t('menu.projectInfo') }}</el-breadcrumb-item>
     <el-breadcrumb-item v-if="projectInfo && projectInfo.projectName">{{ projectInfo.projectName }}</el-breadcrumb-item>
   </el-breadcrumb>
   <div class="data-infos">
     <!-- <v-chart ref="mychart1" class="chart"></v-chart> -->
-    <DataCard title="漏洞分布" width="auto">
+    <DataCard :title="$t('projectsDetail.vulnerabilityDistribution')" width="auto">
       <template #main>
         <WChart width="100%" height="200px" :option="option" ref="mychart"></WChart>
       </template>
     </DataCard>
-    <DataCard title="项目基础信息">
+    <DataCard :title="$t('projectsDetail.projectBasicInfo')">
       <template #main>
         <el-descriptions title="" :column="2" border style="margin-top: 15px;" v-if="projectInfo">
-          <el-descriptions-item label="仓库名" :span="2">{{ projectInfo.projectName }}</el-descriptions-item>
-          <el-descriptions-item label="仓库描述" :span="2">{{ projectInfo.projectDescription }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ timeFormatter(projectInfo.createTime) }}</el-descriptions-item>
-          <el-descriptions-item label="最新扫描时间">{{ timeFormatter(projectInfo.lastScanTime) }}</el-descriptions-item>
-          <el-descriptions-item label="检测标准阈值">
+          <el-descriptions-item :label="$t('projectsDetail.repositoryName')" :span="2">{{ projectInfo.projectName }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('projectsDetail.repositoryDescription')" :span="2">{{ projectInfo.projectDescription }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('projectsDetail.createTime')">{{ timeFormatter(projectInfo.createTime) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('projectsDetail.latestScanTime')">{{ timeFormatter(projectInfo.lastScanTime) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('projectsDetail.detectionThreshold')">
             {{ projectInfo.riskThreshold ?? 0.45 }}
           </el-descriptions-item>
-          <el-descriptions-item label="项目语言">
+          <el-descriptions-item :label="$t('projectsDetail.projectLanguage')">
             {{ projectInfo.language ?? 'java' }}
           </el-descriptions-item>
         </el-descriptions>
       </template>
     </DataCard>
   </div>
-  <DataCard title="组件分析" width="auto">
+  <DataCard :title="$t('projectsDetail.componentAnalysis')" width="auto">
     <template #right>
       <div style="display: flex; align-items: center; gap: 15px;">
         <el-radio-group v-model="viewMode" size="small">
           <el-radio-button value="tree">
             <el-icon><Files /></el-icon>
-            树状图
+            {{ $t('projectsDetail.treeView') }}
           </el-radio-button>
           <el-radio-button value="list">
             <el-icon><List /></el-icon>
-            列表
+            {{ $t('projectsDetail.listView') }}
           </el-radio-button>
         </el-radio-group>
         <!-- <el-input style="width: 240px;margin-right: 20px;" placeholder="请输入组件名称">
@@ -93,7 +93,7 @@
         <!-- List View -->
         <div v-else class="list-container">
           <el-table :data="flattenedListData" stripe style="width: 100%">
-            <el-table-column prop="name" label="组件名称" min-width="200">
+            <el-table-column prop="name" :label="$t('projectsDetail.componentName')" min-width="200">
               <template #default="{ row }">
                 <div style="display: flex; align-items: center;">
                   <el-icon style="margin: 0 8px 0 0px;" size="16">
@@ -103,23 +103,23 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="version" label="版本" width="120" />
-            <el-table-column prop="vendor" label="供应商" width="150" />
-            <el-table-column prop="language" label="语言" width="100" />
-            <el-table-column prop="level" label="层级" width="80" />
+            <el-table-column prop="version" :label="$t('projectsDetail.version')" width="120" />
+            <el-table-column prop="vendor" :label="$t('projectsDetail.supplier')" width="150" />
+            <el-table-column prop="language" :label="$t('projectsDetail.language')" width="100" />
+            <el-table-column prop="level" :label="$t('projectsDetail.level')" width="80" />
           </el-table>
         </div>
       </template>
 
     </template>
   </DataCard>
-  <DataCard title="问题列表" width="auto">
+  <DataCard :title="$t('projectsDetail.issueList')" width="auto">
     <template #main>
       <template v-if="dangerList.length > 0">
         <DangerCard v-for="danger in dangerList" :key="danger.id" :info="danger" @refresh="getProjectDetail" />
       </template>
       <template v-else>
-        <el-empty description="该项目暂未检测到问题"></el-empty>
+        <el-empty :description="$t('common.noIssuesDetected')"></el-empty>
       </template>
     </template>
   </DataCard>
@@ -132,15 +132,25 @@ import DataCard from '@/components/DataCard.vue';
 import SbomForm from '@/components/ProjectsDetail/SbomForm.vue';
 import { type ProjectInfoDetail } from '@/components/Project/const';
 import { onMounted, ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { DangerInfo } from '@/components/Danger/const';
 import { api } from './service';
 import DangerCard from '@/components/ProjectsDetail/DangerCard.vue';
 import { getSbomFile } from '@/components/ProjectsDetail/service';
 import type { SbomItem, SbomResponse } from '@/components/ProjectsDetail/const';
 import { ElMessage } from 'element-plus';
+const { t } = useI18n()
+
 const props = defineProps<{
   projectId: number | string
 }>();
+
+// Computed properties for chart labels
+const riskLabels = computed(() => [
+  t('projects.high').charAt(0), // 高 -> H, High -> H
+  t('projects.medium').charAt(0), // 中 -> M, Medium -> M
+  t('projects.low').charAt(0) // 低 -> L, Low -> L
+])
 
 // 确保projectId是number类型
 const projectId = computed(() => Number(props.projectId))
@@ -165,7 +175,7 @@ const mychart = ref()
 const option = ref({
   xAxis: {
     type: 'category',
-    data: ['高', '中', '低'],
+    data: riskLabels.value,
   },
   yAxis: {
     type: 'value'
@@ -261,6 +271,10 @@ const getProjectDetail = () => {
 
       option.value = {
         ...option.value,
+        xAxis: {
+          type: 'category',
+          data: riskLabels.value,
+        },
         series: newOptionSeries,
       };
       // if (mychart.value) {
@@ -381,7 +395,7 @@ onMounted(() => {
     })
     .catch(err => {
       console.log('获取sbom结构出错', err)
-      ElMessage.error('获取sbom结构失败')
+      ElMessage.error(t('common.error'))
     })
     .finally(() => isTreeLoading.value = false)
   api.getVulList(projectId.value)

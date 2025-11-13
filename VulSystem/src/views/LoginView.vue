@@ -1,13 +1,13 @@
 <template>
   <div class="login">
     <div class="card">
-      <h2>{{ isLogin ? '库灵之眼系统' : '用户注册' }}</h2>
+      <h2>{{ isLogin ? $t('login.systemTitle') : $t('login.userRegister') }}</h2>
 
       <!-- 登录表单 -->
       <div v-if="isLogin">
         <div class="input-container">
-          <div class="input-title">用户名/邮箱</div>
-          <el-input v-model="username" placeholder="请输入您的用户名或邮箱" clearable>
+          <div class="input-title">{{ $t('login.usernameOrEmail') }}</div>
+          <el-input v-model="username" :placeholder="$t('login.enterUsernameOrEmail')" clearable>
             <template #prefix>
               <el-icon><User /></el-icon>
             </template>
@@ -15,8 +15,8 @@
         </div>
 
         <div class="input-container">
-          <div class="input-title">密码</div>
-          <el-input v-model="passwd" show-password placeholder="请输入密码" clearable>
+          <div class="input-title">{{ $t('common.password') }}</div>
+          <el-input v-model="passwd" show-password :placeholder="$t('login.enterPassword')" clearable>
             <template #prefix>
               <el-icon><Lock /></el-icon>
             </template>
@@ -25,15 +25,15 @@
 
         <div class="confirm-button" @click="handleLogin">
           <el-icon><ArrowRightBold></ArrowRightBold></el-icon>
-          <span class="confirm-text">登录</span>
+          <span class="confirm-text">{{ $t('login.loginButton') }}</span>
         </div>
       </div>
 
       <!-- 注册表单 -->
       <div v-else>
         <div class="input-container">
-          <div class="input-title">用户名</div>
-          <el-input v-model="regUsername" placeholder="请输入用户名" clearable>
+          <div class="input-title">{{ $t('common.username') }}</div>
+          <el-input v-model="regUsername" :placeholder="$t('login.enterUsername')" clearable>
             <template #prefix>
               <el-icon><User /></el-icon>
             </template>
@@ -41,8 +41,8 @@
         </div>
 
         <div class="input-container">
-          <div class="input-title">邮箱</div>
-          <el-input v-model="regEmail" placeholder="请输入邮箱" clearable>
+          <div class="input-title">{{ $t('common.email') }}</div>
+          <el-input v-model="regEmail" :placeholder="$t('login.enterEmail')" clearable>
             <template #prefix>
               <el-icon><Message /></el-icon>
             </template>
@@ -50,8 +50,8 @@
         </div>
 
           <div class="input-container">
-          <div class="input-title">手机号码</div>
-          <el-input v-model="regPhone" placeholder="请输入手机号码" clearable>
+          <div class="input-title">{{ $t('login.phoneNumber') }}</div>
+          <el-input v-model="regPhone" :placeholder="$t('login.enterPhone')" clearable>
             <template #prefix>
               <el-icon><Message /></el-icon>
             </template>
@@ -59,8 +59,8 @@
         </div>
 
         <div class="input-container">
-          <div class="input-title">密码</div>
-          <el-input v-model="regPassword" show-password placeholder="请输入密码" clearable>
+          <div class="input-title">{{ $t('common.password') }}</div>
+          <el-input v-model="regPassword" show-password :placeholder="$t('login.enterPassword')" clearable>
             <template #prefix>
               <el-icon><Lock /></el-icon>
             </template>
@@ -68,8 +68,8 @@
         </div>
 
         <div class="input-container">
-          <div class="input-title">确认密码</div>
-          <el-input v-model="regConfirmPassword" show-password placeholder="请再次输入密码" clearable>
+          <div class="input-title">{{ $t('login.confirmPassword') }}</div>
+          <el-input v-model="regConfirmPassword" show-password :placeholder="$t('login.enterConfirmPassword')" clearable>
             <template #prefix>
               <el-icon><Lock /></el-icon>
             </template>
@@ -78,16 +78,15 @@
 
         <div class="confirm-button" @click="handleRegister">
           <el-icon><ArrowRightBold></ArrowRightBold></el-icon>
-          <span class="confirm-text">注册</span>
+          <span class="confirm-text">{{ $t('login.registerButton') }}</span>
         </div>
       </div>
 
       <!-- 切换登录/注册 -->
       <div class="switch-container">
-        <span v-if="isLogin">还没有账号？</span>
-        <span v-else>已有账号？</span>
+        <span>{{ isLogin ? $t('login.switchToRegister') : $t('login.switchToLogin') }}</span>
         <span class="link" @click="toggleMode">
-          {{ isLogin ? '立即注册' : '立即登录' }}
+          {{ isLogin ? $t('login.registerNow') : $t('login.loginNow') }}
         </span>
       </div>
     </div>
@@ -97,9 +96,12 @@
 import router from '@/router'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { api } from './service'
 
 import {ArrowRightBold, Lock, User, Message} from '@element-plus/icons-vue';
+
+const { t } = useI18n()
 
 const isLogin = ref(true)
 const username = ref('')
@@ -133,7 +135,7 @@ const toggleMode = () => {
 // 登录处理
 const handleLogin = () => {
   if (!username.value || !passwd.value) {
-    ElMessage.warning('请输入用户名和密码')
+    ElMessage.warning($t('common.enterUsernameAndPassword'))
     return
   }
 
@@ -148,7 +150,7 @@ const handleLogin = () => {
       localStorage.setItem('companyId', res.data.obj.companyId)
       localStorage.setItem('companyName', res.data.obj.companyName)
       localStorage.setItem('username', username.value)
-      ElMessage.success('登录成功')
+      ElMessage.success(t('common.loginSuccess'))
       // wait for 0.5 second
       setTimeout(() => {
         router.push('/')
@@ -163,21 +165,21 @@ const handleLogin = () => {
 const handleRegister = () => {
   // 表单验证
   if (!regUsername.value) {
-    ElMessage.warning('请输入用户名')
+    ElMessage.warning(t('common.enterUsername'))
     return
   }
 
   if (!regEmail.value) {
-    ElMessage.warning('请输入邮箱')
+    ElMessage.warning(t('common.enterEmail'))
     return
   }
     if (!regPhone.value) {
-    ElMessage.warning('请输入电话号码')
+    ElMessage.warning(t('common.enterPhone'))
     return
   }
 
   if (!regPassword.value) {
-    ElMessage.warning('请输入密码')
+    ElMessage.warning(t('common.enterPassword'))
     return
   }
 
@@ -202,7 +204,7 @@ const handleRegister = () => {
         return
       }
 
-      ElMessage.success('注册成功，请登录')
+      ElMessage.success(t('common.registerSuccessLoginPlease'))
       // 切换到登录模式
       setTimeout(() => {
         isLogin.value = true

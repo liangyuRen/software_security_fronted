@@ -76,8 +76,8 @@ const sbomIntro = computed(() => {
 </script>
 
 <template>
-  <el-button type="primary" color="#336fff" @click="sbomformVisible = true">导出SBOM</el-button>
-  <el-dialog v-model="sbomformVisible" title="导出SBOM" width="40%">
+  <el-button type="primary" color="#336fff" @click="sbomformVisible = true">SBOM</el-button>
+  <el-dialog v-model="sbomformVisible" title="SBOM" width="40%">
     <div class="sbom">
       <div class="intro">SBOM 是软件材料清单，它提供了对软件供应链的可见性，包括组件的版本、许可证信息、漏洞等。SBOM 旨在帮助组织更好地管理和控制软件供应链，识别和处理潜在的漏洞、合规性问题和安全风险
       </div>

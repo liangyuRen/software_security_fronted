@@ -1,17 +1,17 @@
 <template>
-  <DataCard title="问题描述" width="auto" class="advice">
+  <DataCard :title="t('adviceCard.problemDescription')" width="auto" class="advice">
     <template #main>
       <div class="section">
         <div class="line">
-          <h2>漏洞库名: </h2>
+          <h2>{{ t('adviceCard.vulnLibraryName') }}: </h2>
           <p>{{ info.name }}</p>
         </div>
 
         <div class="line">
-          <h2>漏洞描述: </h2>
+          <h2>{{ t('adviceCard.vulnDescription') }}: </h2>
           <p>{{ info.description }}</p>
         </div>
-        <h2>相关代码: </h2>
+        <h2>{{ t('adviceCard.relatedCode') }}: </h2>
         <!-- 编辑代码，发送请求 -->
         <!-- <div class="line" style="justify-content: space-between;">
           <div class="operation">
@@ -24,11 +24,11 @@
         </div> -->
         <div class="code-block">
           <el-input v-model="errCode" :autosize="{ minRows: 4, maxRows: 20 }" type="textarea"
-            placeholder="请输入相关代码，以便模型更好地帮助修复" resize="none" />
+            :placeholder="t('adviceCard.codeInputPlaceholder')" resize="none" />
         </div>
 
         <div class="line" style="justify-content: end; margin-top: 10px;">
-          <el-button type="primary" @click="getAdvice">确认搜索</el-button>
+          <el-button type="primary" @click="getAdvice">{{ t('adviceCard.confirmSearch') }}</el-button>
           <!-- <div class="operation"> -->
 
           <!-- <template v-if="inEdit">
@@ -48,7 +48,7 @@
       </div>
     </template>
   </DataCard>
-  <DataCard title="建议" width="auto" class="advice">
+  <DataCard :title="t('adviceCard.suggestion')" width="auto" class="advice">
     <template #right>
       <el-select v-model="modelName" placeholder="Select" style="width: 240px" @change="getAdvice">
         <el-option v-for="item in modelList" :key="item" :label="item" :value="item" />
@@ -60,11 +60,11 @@
         <div v-if="isLoading" style="display: flex; justify-content: center; align-items: center; height: 200px;">
           <LoadingFrames size="large"></LoadingFrames>
         </div>
-        <div v-else-if="adviceCode != ''">
+        <div v-else-if="adviceCode">
           <MarkdownComponent :markdown="adviceCode" classname="advice-block" />
         </div>
         <div v-else>
-          <el-empty description="抱歉，未能获取到修复建议，请重新尝试"></el-empty>
+          <el-empty :description="t('adviceCard.failedToGetAdvice')"></el-empty>
         </div>
 
       </div>
@@ -90,11 +90,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 // import { Edit, Search } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import type { DangerInfo } from '../Danger/const';
 import MarkdownComponent from './MarkdownComponent.vue';
 import { getSuggestion } from './service';
 import { ElMessage } from 'element-plus';
 
+const { t } = useI18n()
 const props = withDefaults(
   defineProps<{
     info: DangerInfo
@@ -102,6 +104,54 @@ const props = withDefaults(
   {
   }
 );
+
+// 处理复杂数据结构，将嵌套对象转换为可读的Markdown格式
+const processComplexData = (data: any): string => {
+  if (typeof data === 'string') {
+    // 如果是字符串，检查并处理其中可能包含的对象表示
+    return data.replace(/\[object Object\]/g, (match) => {
+      try {
+        // 尝试从周围上下文中推断对象的实际内容
+        return 'Object';
+      } catch {
+        return 'Object';
+      }
+    });
+  }
+
+  if (data === null || data === undefined) {
+    return '';
+  }
+
+  if (Array.isArray(data)) {
+    // 处理数组
+    return data.map(item => processComplexData(item)).join('\n');
+  }
+
+  if (typeof data === 'object') {
+    // 处理对象，转换为可读的格式
+    try {
+      const result: string[] = [];
+      for (const [key, value] of Object.entries(data)) {
+        if (typeof value === 'string') {
+          result.push(`${key}: ${value}`);
+        } else if (Array.isArray(value)) {
+          result.push(`${key}:\n${value.map(item => `- ${processComplexData(item)}`).join('\n')}`);
+        } else if (typeof value === 'object' && value !== null) {
+          result.push(`${key}:\n${processComplexData(value).split('\n').map(line => `  ${line}`).join('\n')}`);
+        } else {
+          result.push(`${key}: ${String(value)}`);
+        }
+      }
+      return result.join('\n');
+    } catch (e) {
+      // 如果处理失败，返回格式化的JSON
+      return JSON.stringify(data, null, 2);
+    }
+  }
+
+  return String(data);
+}
 const modelName = ref<string>('qwen')
 const modelList = ['deepseek', 'llama', 'qwen']
 
@@ -136,11 +186,26 @@ const getAdvice = () => {
   }
   getSuggestion(...requestList)
     .then(res => {
-      adviceCode.value = res.data.obj.fix_advise
+      console.log('API返回的数据结构:', res.data)
+      console.log('fix_advise的类型:', typeof res.data.obj?.fix_advise)
+      console.log('fix_advise的内容:', res.data.obj?.fix_advise)
+
+      // 处理可能的对象数据
+      let adviceContent = res.data.obj?.fix_advise
+
+      // 深度处理数据结构，将所有嵌套对象转换为可读格式
+      adviceContent = processComplexData(adviceContent)
+
+      adviceCode.value = adviceContent || ''
+      ElMessage.success(t('adviceCard.successfullyGetAdvice'))
     })
     .catch(err => {
-      // adviceCode.value = ''
-      ElMessage.error('未能成功获取到修复建议')
+      
+      if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+        ElMessage.error(t('adviceCard.requestTimeout'))
+      } else {
+        ElMessage.error(t('adviceCard.failedToGetSuggestion'))
+      }
       console.log(`获取修复建议出错: ${err}`)
     })
     .finally(() => {

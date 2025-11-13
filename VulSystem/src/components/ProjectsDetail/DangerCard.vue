@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Edit, Delete, ArrowDown, ArrowRight } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import type { DangerInfo } from '../Danger/const';
 import AdviceCard from '../Markdown/AdviceCard.vue';
 import { acceptVul } from '../Markdown/service';
@@ -26,17 +27,17 @@ const statusTag = computed(() => {
     ['High']: {
       color: '#FF5340',
       bgc: '#FFF4F1',
-      text: '高风险'
+      text: t('dangerCard.highRisk')
     },
     ['Medium']: {
       color: '#8b5cf6',
       bgc: '#f3e8ff',
-      text: '中风险'
+      text: t('dangerCard.mediumRisk')
     },
     ['Low']: {
       color: '#336FFF',
       bgc: '#E5EFFF',
-      text: '低风险'
+      text: t('dangerCard.lowRisk')
     },
   }
   const res = tags[props.info.riskLevel];
@@ -46,7 +47,7 @@ const statusTag = computed(() => {
   return {
     color: '#FF5340',
     bgc: '#FFF4F1',
-    text: '高风险'
+    text: t('dangerCard.highRisk')
   }
 })
 console.log('测试问题列表')
@@ -57,6 +58,7 @@ const localAccept = ref<boolean>(props.info.isaccept == 1); // 初始化本地�
 watch(() => props.info.isaccept, (newValue) => {
   localAccept.value = newValue == 1;
 });
+const { t } = useI18n()
 const emit = defineEmits(['refresh'])
 const dialogVisible = ref<boolean>(false)
 const loading = ref<boolean>(false)
@@ -95,7 +97,7 @@ const timeFormatter = (dateString: string) => {
         <h4>{{ info.name }}</h4>
         <div class="link"></div>
       </div>
-      <el-button v-if="localAccept" type="primary" plain @click="dialogVisible = true">查看修复建议</el-button>
+      <el-button v-if="localAccept" type="primary" plain @click="dialogVisible = true">{{ t('dangerCard.viewFixAdvice') }}</el-button>
 
     </div>
     <el-text class="text" truncated type="info" line-clamp="2">{{ info.description }}</el-text>
@@ -104,7 +106,7 @@ const timeFormatter = (dateString: string) => {
         <div class="tag" :style="{ backgroundColor: statusTag.bgc, color: statusTag.color }">{{ statusTag.text }}</div>
         <!-- <div class="tag">{{ 会员专享 }}</div> -->
         <div class="info-tag">
-          语言: {{ info.language }}
+          {{ t('dangerCard.language') }}: {{ info.language }}
         </div>
         <div class="info-tag">
           {{ timeFormatter(info.time) }}
@@ -112,7 +114,7 @@ const timeFormatter = (dateString: string) => {
 
       </div>
       <div class="right">
-        <div class="label">采纳该问题</div>
+        <div class="label">{{ t('dangerCard.adoptIssue') }}</div>
         <el-switch v-model="localAccept" :loading="loading" :before-change="beforeAcceptChange" />
       </div>
     </div>

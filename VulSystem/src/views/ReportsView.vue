@@ -9,8 +9,8 @@
             <DataLine />
           </el-icon>
           <div class="title-text">
-            <h1 class="page-title">漏洞报告</h1>
-            <p class="page-subtitle">搜索和筛选安全漏洞报告</p>
+            <h1 class="page-title">{{ $t('reports.vulnerabilityReports') }}</h1>
+            <p class="page-subtitle">{{ $t('reports.searchAndFilter') }}</p>
           </div>
         </div>
 
@@ -19,7 +19,7 @@
           <div class="search-input-wrapper">
             <el-input
               v-model="searchQuery"
-              placeholder="搜索漏洞ID、名称或描述..."
+              :placeholder="$t('reports.searchVulnerability')"
               class="search-input"
               size="large"
               clearable
@@ -33,10 +33,10 @@
           </div>
 
           <div class="filter-item">
-            <label class="filter-label">风险等级</label>
+            <label class="filter-label">{{ $t('projects.riskLevel') }}</label>
             <el-select
               v-model="selectedRiskLevel"
-              placeholder="全部等级"
+              :placeholder="$t('projects.allLevels')"
               class="filter-select"
               size="large"
               clearable
@@ -61,7 +61,7 @@
           </div>
 
           <div class="filter-item">
-            <label class="filter-label">时间范围</label>
+            <label class="filter-label">{{ $t('projects.timeRange') }}</label>
             <el-date-picker
               v-model="selectedTime"
               type="daterange"

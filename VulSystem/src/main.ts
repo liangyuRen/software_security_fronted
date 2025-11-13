@@ -5,6 +5,7 @@ import 'element-plus/theme-chalk/src/message.scss'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import i18n from './locales'
 
 import * as echarts from 'echarts'
 
@@ -13,5 +14,6 @@ const app = createApp(App)
 app.config.globalProperties.$echarts = echarts
 
 app.use(router)
+app.use(i18n)
 
 app.mount('#app')

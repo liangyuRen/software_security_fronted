@@ -10,8 +10,8 @@
             <TrendCharts />
           </el-icon>
           <div class="title-text">
-            <h1 class="page-title">项目综合分析</h1>
-            <p class="page-subtitle">全面分析项目漏洞趋势与组件分布</p>
+            <h1 class="page-title">{{ $t('projects.comprehensiveAnalysis') }}</h1>
+            <p class="page-subtitle">{{ $t('projects.analyzeTrendsAndComponents') }}</p>
           </div>
         </div>
       </div>
@@ -24,7 +24,7 @@
           <el-icon class="section-icon">
             <DataAnalysis />
           </el-icon>
-          漏洞情况统计
+          {{ $t('projects.vulnerabilityStatistics') }}
         </h2>
       </div>
       <div class="chart-content">
@@ -41,7 +41,7 @@
             <el-icon class="section-icon">
               <Warning />
             </el-icon>
-            待解决项目
+            {{ $t('projects.pendingProjects') }}
           </h2>
         </div>
         <div class="projects-content">
@@ -58,7 +58,7 @@
           </template>
           <template v-else>
             <div class="empty-state">
-              <el-empty description="暂无待解决项目" :image-size="100"></el-empty>
+              <el-empty :description="$t('common.noPendingProjects')" :image-size="100"></el-empty>
             </div>
           </template>
         </div>
@@ -73,7 +73,7 @@
               <el-icon class="section-icon">
                 <Grid />
               </el-icon>
-              组件统计
+              {{ $t('projects.componentStatistics') }}
             </h2>
           </div>
           <div class="stats-content">
@@ -84,7 +84,7 @@
                 </el-icon>
               </div>
               <div class="stat-details">
-                <div class="stat-label">已扫描</div>
+                <div class="stat-label">{{ $t('common.scanned') }}</div>
                 <div class="stat-value">{{ thirdLibraryNum }}</div>
               </div>
             </div>
@@ -95,7 +95,7 @@
                 </el-icon>
               </div>
               <div class="stat-details">
-                <div class="stat-label">漏洞组件数</div>
+                <div class="stat-label">{{ $t('projects.vulnerableComponents') }}</div>
                 <div class="stat-value">{{ vulNum }}</div>
               </div>
             </div>
@@ -109,7 +109,7 @@
               <el-icon class="section-icon">
                 <PieChart />
               </el-icon>
-              编程语言占比
+              {{ $t('projects.programmingLanguageRatio') }}
             </h2>
           </div>
           <div class="chart-content">
@@ -127,7 +127,18 @@ import WChart from '@/components/chart/index.vue'
 import PInfo from '@/components/Project/PInfo.vue';
 import LoadingFrames from "@/components/LoadingFrames.vue";
 import { type ProjectInfo } from '@/components/Project/const';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n()
+
+// Computed properties for chart labels
+const riskLevelLabels = computed(() => [
+  t('projects.high'),
+  t('projects.medium'),
+  t('projects.low')
+])
+
 import { getCompanyStatic, type StatisticsInfo } from '@/components/Statistic/const';
 import { ElMessage } from 'element-plus';
 import { getVulProjectList } from '@/components/Project/apis';
@@ -142,7 +153,7 @@ const dangerChangeOption = ref({
     trigger: 'axis'
   },
   legend: {
-    data: ['高风险', '中风险', '低风险'],
+    data: riskLevelLabels.value,
     right: '5%',
     top: '5%'
   },
@@ -167,7 +178,7 @@ const dangerChangeOption = ref({
   },
   series: [
     {
-      name: '高风险',
+      name: riskLevelLabels.value[0],
       type: 'line',
       // stack: 'Total',
       smooth: true,
@@ -177,7 +188,7 @@ const dangerChangeOption = ref({
       }
     },
     {
-      name: '中风险',
+      name: riskLevelLabels.value[1],
       type: 'line',
       // stack: 'Total',
       smooth: true,
@@ -187,7 +198,7 @@ const dangerChangeOption = ref({
       }
     },
     {
-      name: '低风险',
+      name: riskLevelLabels.value[2],
       type: 'line',
       // stack: 'Total',
       smooth: true,
@@ -277,7 +288,7 @@ const getProjects = () => {
       dangerProjectInfos.value = res
     }).catch((err) => {
       console.log(err);
-      ElMessage.error('获取项目列表失败');
+      ElMessage.error(t('common.error'));
     }).finally(() => {
       isLoading.value = false;
     })
@@ -318,7 +329,7 @@ onMounted(() => {
       // 修改漏洞情况统计折现图
       const newDangerChangeSeries = [
         {
-          name: '高风险',
+          name: riskLevelLabels.value[0],
           type: 'line',
           // stack: 'Total',
           smooth: true,
@@ -328,7 +339,7 @@ onMounted(() => {
           }
         },
         {
-          name: '中风险',
+          name: riskLevelLabels.value[1],
           type: 'line',
           // stack: 'Total',
           smooth: true,
@@ -338,7 +349,7 @@ onMounted(() => {
           }
         },
         {
-          name: '低风险',
+          name: riskLevelLabels.value[2],
           type: 'line',
           // stack: 'Total',
           smooth: true,
@@ -350,6 +361,11 @@ onMounted(() => {
       ]
       dangerChangeOption.value = {
         ...dangerChangeOption.value,
+        legend: {
+          data: riskLevelLabels.value,
+          right: '5%',
+          top: '5%'
+        },
         series: newDangerChangeSeries
       }
     })

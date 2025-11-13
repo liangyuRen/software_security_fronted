@@ -9,33 +9,33 @@ const router = createRouter({
     },
     {
       path: '/projects/info',
-      name: '项目管理',
+      name: 'projectInfo',
       component: () => import('../views/ProjectsInfo.vue'),
     },
     {
       path: '/projects/info/:projectId',
-      name: '项目分析',
+      name: 'projectAnalysis',
       component: ProjectsDetail,
       props: true,
     },
     {
       path: '/projects/analy',
-      name: '项目综合分析',
+      name: 'comprehensiveAnalysis',
       component: () => import('../views/ProjectsAnaly.vue'),
     },
     {
       path: '/reports',
-      name: '漏洞报告',
+      name: 'vulnerabilityReports',
       component: () => import('../views/ReportsView.vue'),
     },
     {
       path: '/optimize',
-      name: '应用优化',
+      name: 'applicationOptimization',
       component: () => import('../views/OptimizeView.vue'),
     },
     {
       path: '/users',
-      name: '用户中心',
+      name: 'userCenter',
       component: () => import('../views/UserView.vue'),
     },
     {

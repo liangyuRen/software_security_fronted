@@ -25,6 +25,20 @@ export const createProject = (project: FormData): Promise<ProjectCreateResponse>
   })
 }
 
+export const uploadProject = (formData: FormData): Promise<ProjectCreateResponse> => {
+  return new Promise((resolve, reject) => {
+    instance
+      .post(`/project/uploadProject`, formData)
+      .then((res: AxiosResponse<ProjectCreateResponse>) => {
+        resolve(res.data)
+      })
+      .catch((err: AxiosError) => {
+        console.error(err)
+        reject(err)
+      })
+  })
+}
+
 export const updateProject = (project: FormData): Promise<ProjectCreateResponse> => {
   return new Promise((resolve, reject) => {
     instance
