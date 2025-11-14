@@ -11,7 +11,7 @@ export interface ProjectCreateResponse {
   // [property: string]: never
 }
 
-export const createProject = (project: FormData): Promise<ProjectCreateResponse> => {
+export const createProject = (project: FormData | ProjectInfo): Promise<ProjectCreateResponse> => {
   return new Promise((resolve, reject) => {
     instance
       .post(`/project/create`, project)
@@ -39,7 +39,7 @@ export const uploadProject = (formData: FormData): Promise<ProjectCreateResponse
   })
 }
 
-export const updateProject = (project: FormData): Promise<ProjectCreateResponse> => {
+export const updateProject = (project: FormData | ProjectInfo): Promise<ProjectCreateResponse> => {
   return new Promise((resolve, reject) => {
     instance
       .post(`/project/update`, project)
@@ -53,7 +53,7 @@ export const updateProject = (project: FormData): Promise<ProjectCreateResponse>
   })
 }
 
-export const deleteProject = (project: FormData): Promise<ProjectCreateResponse> => {
+export const deleteProject = (project: FormData | ProjectInfo): Promise<ProjectCreateResponse> => {
   return new Promise((resolve, reject) => {
     instance
       .post(`/project/delete`, project)

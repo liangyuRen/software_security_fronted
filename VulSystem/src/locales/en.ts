@@ -205,7 +205,6 @@ export default {
     updateProfile: 'Update Profile',
     changePassword: 'Change Password',
     basicInfo: 'Basic Information',
-    contactInfo: 'Contact Information',
     companyInfo: 'Company Information',
     fullName: 'Full Name',
     jobTitle: 'Job Title',

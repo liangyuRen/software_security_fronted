@@ -71,7 +71,7 @@
               class="filter-date"
               size="large"
               clearable
-              @clear="selectedTime=''"
+              @clear="selectedTime=[]"
             />
           </div>
         </div>
@@ -114,7 +114,7 @@ import {dayjs} from "element-plus";
 const searchQuery = ref('')
 const selectedRiskLevel = ref('')
 const riskLevelOptions = ['Low', 'Medium', 'High']
-const selectedTime = ref([])
+const selectedTime = ref<(string | number)[]>([])
 
 const reportList = ref<ReportInfo[]>([]);
 const allReports = ref<ReportInfo[]>([]); // 存储所有获取的报告数据
@@ -161,7 +161,9 @@ async function getReports(currentPage: number = 1) {
           reportId: report.cveId,
           time: report.disclosureTime,
           riskLevel: report.riskLevel,
-          ref: report.referenceLink
+          ref: report.referenceLink,
+          isCve: true,
+          isPoc: false
         });
       }
     }
@@ -193,7 +195,7 @@ const isFiltered = computed(() => {
 });
 
 // search
-const filteredReports = ref([])
+const filteredReports = ref<ReportInfo[]>([])
 
 function debounce<T extends (...args: never[]) => Promise<void> | void>(
   fn: T,
@@ -219,7 +221,7 @@ async function searchReports(keyword: string) {
   isLoading.value = true;
   try {
     const res = await getVulnerabilityReportSearch(keyword);
-    const data:VulnerabilityReportSearchResponse = res;
+    const data = res as VulnerabilityReportSearchResponse;
     if (data.obj && data.obj.length > 0) {
       for(let i=0; i<data.obj.length; i++) {
         const report = data.obj[i];
@@ -229,7 +231,9 @@ async function searchReports(keyword: string) {
           reportId: report.cveId,
           time: report.disclosureTime,
           riskLevel: report.riskLevel,
-          ref: report.referenceLink
+          ref: report.referenceLink,
+          isCve: true,
+          isPoc: false
         });
       }
     }
@@ -259,7 +263,7 @@ async function filterReports(riskLevel: string, startTime: string, endTime: stri
   filteredReports.value = [];
   try {
     const res = await getFilteredVulnerabilityReport(riskLevel, formattedStartTime, formattedEndTime);
-    const data:VulnerabilityReportSearchResponse = res;
+    const data = res as VulnerabilityReportSearchResponse;
     console.log('过滤结果数据:', data);
     if (data.obj && data.obj.length > 0) {
       for(let i=0; i<data.obj.length; i++) {
@@ -270,7 +274,9 @@ async function filterReports(riskLevel: string, startTime: string, endTime: stri
           reportId: report.cveId,
           time: report.disclosureTime,
           riskLevel: report.riskLevel,
-          ref: report.referenceLink
+          ref: report.referenceLink,
+          isCve: true,
+          isPoc: false
         });
       }
     }
@@ -287,7 +293,7 @@ watch([selectedRiskLevel, selectedTime], ([riskLevel, time]) => {
     return;
   }
   searchQuery.value = '';
-  filterReports(riskLevel, time[0], time[1]);
+  filterReports(riskLevel, time[0] as string, time[1] as string);
 });
 
 watch(searchQuery, (newQuery) => {
@@ -295,7 +301,7 @@ watch(searchQuery, (newQuery) => {
     return;
   }
   selectedRiskLevel.value = '';
-  selectedTime.value = '';
+  selectedTime.value = [];
   debouncedSearch(newQuery);
 });
 

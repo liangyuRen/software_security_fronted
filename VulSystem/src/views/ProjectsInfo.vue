@@ -458,9 +458,20 @@ async function getProjects(companyId: number, page?: number) {
         console.error(data);
         return;
       }
-      projectInfos.value = data.obj;
-      totalProjects.value = data.obj.length;
-      filteredProjects.value = data.obj;
+      // 将Obj转换为ProjectInfo
+      const projects: ProjectInfo[] = data.obj.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        risk_level: item.risk_level,
+        risk_threshold: item.risk_threshold ? parseInt(item.risk_threshold, 10) : 0,
+        language: 'java', // 默认值，会在后续被更新
+        companyId: companyId,
+        filePath: null
+      }));
+      projectInfos.value = projects;
+      totalProjects.value = projects.length;
+      filteredProjects.value = projects;
     }).catch((err) => {
       console.log(err);
       ElMessage.error(t('common.getProjectListFailed'));
@@ -500,6 +511,7 @@ onMounted(async () => {
       noRiskNum: noRiskNum,
       cVulnerabilityNum: 0,
       highRiskVulnerabilityNum: 0,
+      lowRiskVulnerabilityNum: 0,
       javaVulnerabilityNum: 0,
       midRiskVulnerabilityNum: 0,
       thirdLibraryNum: 0,

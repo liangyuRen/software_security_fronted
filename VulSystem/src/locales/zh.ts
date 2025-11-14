@@ -205,7 +205,6 @@ export default {
     updateProfile: '更新个人资料',
     changePassword: '修改密码',
     basicInfo: '基本信息',
-    contactInfo: '联系信息',
     companyInfo: '公司信息',
     fullName: '全名',
     jobTitle: '职位',

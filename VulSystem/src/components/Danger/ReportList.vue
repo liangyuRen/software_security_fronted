@@ -36,8 +36,8 @@ const displayedPages = computed(() => {
 
 <template>
   <div class="danger-card">
-    <ReportListTable v-if="!props.isFiltered" :paginated-list="props.reportInfoList" :search-query="searchQuery" />
-    <ReportListTable v-else :paginated-list="filteredReports" :search-query="searchQuery" />
+    <ReportListTable v-if="!props.isFiltered" :paginated-list="props.reportInfoList" :search-query="props.searchQuery ?? ''" />
+    <ReportListTable v-else :paginated-list="filteredReports" :search-query="props.searchQuery ?? ''" />
   </div>
   <div class="card-footer" v-if="!props.isFiltered">
     <div class="pagination">
